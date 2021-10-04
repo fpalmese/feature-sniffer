@@ -1,5 +1,8 @@
+#Feature-Sniffer
 This repo contains Feature-Sniffer, a tool for capturing traffic features on-the-fly in an Access Point with OpenWrt firmware.
-Installation:
+
+
+#Installation:
 - After installing openwrt, install the packages in requirements.txt to be installed with opkg in the access point.
 - Copy the "controller" in the /usr/lib/lua/luci/controller folder
 - Copy the "view" folder in the /usr/lib/lua/luci/view 
