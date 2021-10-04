@@ -8,16 +8,11 @@ This repo contains Feature-Sniffer, a tool for capturing traffic features on-the
 ```bash
 opkg update && opkg install requirements.txt
 ```
-- Copy the homeDirectory/features folder into your access point home folder (be sure that the shell scripts contained are set as executable)
-- Copy the filesDirectory/features folder into your access point output folder
-- Copy the "controller" in the /usr/lib/lua/luci/controller folder
-- Copy the "view" folder in the /usr/lib/lua/luci/view 
-- 
-- Edit the controller file by setting your own homeDirectory path and filesDirectory path (directory that will contain the output and configurations)
-- Compile the C package with the following steps:
-    -Download from the OpenWrt the SDK for your system architecture
-    -
-    -
-    - ...
-- Upload the compiled package into your access point and install it with opkg
-- You are now ready to use Feature-Sniffer
+- Copy the homeDirectory/forensics folder into your access point home folder (be sure that the shell scripts contained are set as executable)
+- Copy the filesDirectory/forensics folder into your access point output folder (all the configurations and output will be stored here)
+- Copy the "luci-app/controller/admin/forensics.lua" file in the "/usr/lib/lua/luci/controller/admin" folder in the Access Point
+- Copy the "luci-app/view/forensics/features.htm" file in the "/usr/lib/lua/luci/view/forensics" in the Access Point
+- Set your homeDirectory in the controller file (/usr/lib/lua/luci/controller/admin/forensics.lua), in the variable homeDirectory
+- Compile the C package by following the OpenWRT guide here https://openwrt.org/docs/guide-developer/helloworld/start, using the Makefile in the C/Makefile (adjust PATHs) and the files in the C/ folder
+- Upload the compiled package into your access point (use scp or sftp for uploading) and install it with opkg
+- You are now ready to use Feature-Sniffer through your Access Point control panel, in the Forensics section of LuCI web interface.
