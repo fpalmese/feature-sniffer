@@ -3,7 +3,7 @@ This repo contains Feature-Sniffer, a tool for capturing traffic features on-the
 
 
 # Installation:
--After installing OpenWrt in your Access Point, install the packages in requirements.txt with: 
+- After installing OpenWrt in your Access Point, install the packages in requirements.txt with: 
 
 ```bash
 opkg update && opkg install requirements.txt
