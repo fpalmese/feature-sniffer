@@ -1,0 +1,1 @@
+This configuration can be used to classify IoT devices in a Small Office/Home Office (SOHO) network.

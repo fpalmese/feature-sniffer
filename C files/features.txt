@@ -1,0 +1,258 @@
+"ts",
+"device",
+		//TCP DL packet size features
+		"tcpDLpackets",
+		"tcpDLTraffic",
+		"meanTcpDLSize",
+		"medianTcpDLSize",
+		"modeTcpDLSize",
+		"varTcpDLSize",
+		"stdevTcpDLSize",
+		"kurtosisTcpDLSize",
+
+		//TCP UL packet size features
+		"tcpULpackets",
+		"tcpULTraffic",
+		"meanTcpULSize",	
+		"medianTcpULSize",
+		"modeTcpULSize",
+		"varTcpULSize",
+		"stdevTcpULSize",
+		"kurtosisTcpULSize",
+		
+		//TCP DL payload size features
+		"sumTcpDLPayload",
+		"meanTcpDLPayload",	
+		"medianTcpDLPayload",
+		"modeTcpDLPayload",
+		"varTcpDLPayload",
+		"stdevTcpDLPayload",
+		"kurtosisTcpDLPayload",
+		
+		//TCP UL payload size features
+		"sumTcpULPayload",
+		"meanTcpULPayload",	
+		"medianTcpULPayload",
+		"modeTcpULPayload",
+		"varTcpULPayload",
+		"stdevTcpULPayload",
+		"kurtosisTcpULPayload",
+
+
+		//TCP packet size features
+		"tcpPackets",
+		"tcpTraffic",
+		"meanTcpSize",	
+		"medianTcpSize",
+		"modeTcpSize",
+		"varTcpSize",
+		"stdevTcpSize",
+		"kurtosisTcpSize",
+		
+		//TCP payload size features
+		"sumTcpPayload",
+		"meanTcpPayload",	
+		"medianTcpPayload",
+		"modeTcpPayload",
+		"varTcpPayload",
+		"stdevTcpULPayload",
+		"kurtosisTcpPayload",
+
+
+		//UDP DL packet size features
+		"udpDLpackets",
+		"udpDLTraffic",
+		"meanUdpDLSize",	
+		"medianUdpDLSize",
+		"modeUdpDLSize",
+		"varUdpDLSize",
+		"stdevUdpDLSize",
+		"kurtosisUdpDLSize",
+
+		//UDP UL packet size features
+		"udpULpackets",	
+		"udpULTraffic",
+		"meanUdpULSize",	
+		"medianUdpULSize",
+		"modeUdpULSize",
+		"varUdpULSize",
+		"stdevUdpULSize",
+		"kurtosisUdpULSize",
+		
+		//UDP DL payload size features
+		"sumUdpDLPayload",
+		"meanUdpDLPayload",	
+		"medianUdpDLPayload",
+		"modeUdpDLPayload",
+		"varUdpDLPayload",
+		"stdevUdpDLPayload",
+		"kurtosisUdpDLPayload",
+		
+		//UDP UL payload size features
+		"sumUdpULPayload",
+		"meanUdpULPayload",	
+		"medianUdpULPayload",
+		"modeUdpULPayload",
+		"varUdpULPayload",
+		"stdevUdpULPayload",
+		"kurtosisUdpULPayload",
+
+		//UDP packet size features
+		"udpPackets",
+		"udpTraffic",
+		"meanUdpSize",	
+		"medianUdpSize",
+		"modeUdpSize",
+		"varUdpSize",
+		"stdevUdpSize",
+		"kurtosisUdpSize",
+		
+		//UDP payload size features
+		"sumUdpPayload",
+		"meanUdpPayload",	
+		"medianUdpPayload",
+		"modeUdpPayload",
+		"varUdpPayload",
+		"stdevUdpULPayload",
+		"kurtosisUdpPayload",
+
+		
+		//Total DL packet size features
+		"totalDLpackets",
+		"totalDLTraffic",
+		"meanTotalDLSize",	
+		"medianTotalDLSize",
+		"modeTotalDLSize",
+		"varTotalDLSize",
+		"stdevTotalDLSize",
+		"kurtosisTotalDLSize",
+
+		//Total UL packet size features
+		"totalULpackets",
+		"totalULTraffic",
+		"meanTotalULSize",	
+		"medianTotalULSize",
+		"modeTotalULSize",
+		"varTotalULSize",
+		"stdevTotalULSize",
+		"kurtosisTotalULSize",
+
+		//Total DL payload size features
+		"sumTotalDLPayload",
+		"meanTotalDLPayload",	
+		"medianTotalDLPayload",
+		"modeTotalDLPayload",
+		"varTotalDLPayload",
+		"stdevTotalDLPayload",
+		"kurtosisTotalDLPayload",
+		
+		//Total UL payload size features
+		"sumTotalULPayload",
+		"meanTotalULPayload",	
+		"medianTotalULPayload",
+		"modeTotalULPayload",
+		"varTotalULPayload",
+		"stdevTotalULPayload",
+		"kurtosisTotalULPayload",
+
+		//Total packet size features
+		"totalpackets",
+		"totalTraffic",
+		"meanTotalSize",	
+		"medianTotalSize",
+		"modeTotalSize",
+		"varTotalSize",
+		"stdevTotalSize",
+		"kurtosisTotalSize",
+
+		//Total payload size features
+		"sumTotalPayload",
+		"meanTotalPayload",	
+		"medianTotalPayload",
+		"modeTotalPayload",
+		"varTotalPayload",
+		"stdevTotalPayload",
+		"kurtosisTotalPayload",
+
+
+
+		
+
+		
+		//TCP DL interarrival features
+		"meanTcpDLInter",	
+		"medianTcpDLInter",
+		"varTcpDLInter",
+		"stdevTcpDLInter",
+		"kurtosisTcpDLInter",
+
+		//TCP UL interarrival features
+		"meanTcpULInter",	
+		"medianTcpULInter",
+		"varTcpULInter",
+		"stdevTcpULInter",
+		"kurtosisTcpULInter",
+	
+		//TCP interarrival features
+		"meanTcpInter",	
+		"medianTcpInter",
+		"varTcpInter",
+		"stdevTcpInter",
+		"kurtosisTcpInter",
+
+
+		//UDP DL interarrival features
+		"meanUdpDLInter",	
+		"medianUdpDLInter",
+		"varUdpDLInter",
+		"stdevUdpDLInter",
+		"kurtosisUdpDLInter",
+
+		//UDP UL interarrival features
+		"meanUdpULInter",	
+		"medianUdpULInter",
+		"varUdpULInter",
+		"stdevUdpULInter",
+		"kurtosisUdpULInter",
+	
+		//UDP interarrival features
+		"meanUdpInter",	
+		"medianUdpInter",
+		"varUdpInter",
+		"stdevUdpInter",
+		"kurtosisUdpInter",
+
+
+		//Total DL interarrival features
+		"meanTotalDLInter",	
+		"medianTotalDLInter",
+		"varTotalDLInter",
+		"stdevTotalDLInter",
+		"kurtosisTotalDLInter",
+
+		//Total UL interarrival features
+		"meanTotalULInter",	
+		"medianTotalULInter",
+		"varTotalULInter",
+		"stdevTotalULInter",
+		"kurtosisTotalULInter",
+
+		//Total interarrival features
+		"meanTotalInter",	
+		"medianTotalInter",
+		"varTotalInter",
+		"stdevTotalInter",
+		"kurtosisTotalInter",
+
+		//Local Ports
+		"totalTcpPorts",
+		"totalUdpPorts",
+
+		//Repote Ports
+		"totalRemoteTCPPorts",
+		"totalRemoteUDPPorts",
+
+		//Remote IPs
+		"totalRemoteIps",
+	
+"Class"

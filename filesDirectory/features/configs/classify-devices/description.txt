@@ -1,0 +1,1 @@
+This config is used to classify devices in a small home network. Dataset taken from https://iotanalytics.unsw.edu.au/iottraces

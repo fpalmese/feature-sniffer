@@ -1,0 +1,1318 @@
+<%+header%>
+
+<%
+--lua functions defined here
+function split(inputstr, sep)
+        if sep == nil then
+                sep = "%s"
+        end
+        local t={}
+        for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+                table.insert(t, str)
+        end
+        return t
+end
+
+
+%>
+
+<h2><%:Feature-Sniffer%></h2>
+<h3><%:Traffic features capturing%></h3> </br>
+<div>This section allows to extract features from network traffic. You can choose to extract features with a live capture, or from your PCAP file.</div>
+
+</br></br>
+<div id="main-view">
+	<div id="create-new-config" class="border clickable">
+	<center><h5>Create a new Feature Capture</h5></center>
+	</div>
+	</br></br>
+	
+	<div>
+		<div style="display:inline-block;position:relative;left:45%">
+			<h5>Existing captures</h5>
+		</div>
+		<div style="display:inline-block; position:relative;float:right">
+			Base directory: <input type="text" id="base-directory-input" style="max-width:150px;max-height:25px;">
+			<button id="change-dir-btn" class="btn" style="margin-left:4px;line-height:85%;max-width:75px">Change</button>
+		</div>
+	</div>
+	<center> 
+	<div id="existing-configs-div" class="border" style="min-height:30px">
+	
+	</div>
+	</center>
+</div>
+
+
+
+<div id="new-config-tab-container" class="border" style="display:None">
+	<div id="new-config-tab" style="width:90%;margin-left: auto; margin-right: auto;">
+		<form>
+			
+			<div><h5 class="text-center" id="config-title">Configure the Feature Capture</h5></br>
+				<div style="display:flow-root">
+					<div style="display:inline-block;float:left;">
+						Configuration Name: <input id="config-name" type="text" value="" placeholder="Insert a valid name"></br></br>
+					</div>
+					<div style="display:inline-block;float:right;">
+						Load an existing configuration:
+							<a id="predefined-config-loading"></a><select id="select-predefined-config">
+								<option value="-"></option>
+							</select>
+					</div>
+				</div>
+				
+				<div>
+				Description: <textarea style="display:inline-block;" id="config-description">
+							</textarea>
+				</div>
+			</div>
+			<div id="capture-settings">
+				<h5 class="text-center" style="border-bottom: 2px solid grey;">Capture settings</h5></br>
+				<div class="capture-settings-subdiv">
+					<b>Capture type:</b><select id="capture-type">
+									<option value=0>Live Capture</option>
+									<option value=1>Capture from PCAP</option>
+							</select></br></br>
+					<div id="interface-select-div">Interface: <select id="interface-select" placeholder="Select an Interface">
+							<%	local ifnames = luci.sys.exec("ip -o link show | awk -F': ' '{print $2}'")
+								local interfaces = split(ifnames)
+								for i in pairs(interfaces) do 
+									local interface = split(interfaces[i],"@")[1]
+									write("<option value='"..interface.."'>"..interface.."</option>\n");
+								end 
+							%>
+							</select></br></br></div>
+							   
+					<div id="file-select-div" style="display:none">
+						PCAP file (absolute PATH): <input id="config-readfile" type="text" value="" placeholder="PCAP absolute path"> </br></br>
+						Router address (ip/mask): <input id="config-router-addr" type="text" value="<%= luci.sys.exec("ip -o -f inet addr show | awk '/br-lan/ {print $4}'")%>"></br></br>
+					</div>
+					Capture filter: <input id="config-capture-filter" type="text" value="" placeholder="Insert a valid filter string"></br></br>
+					Window duration (s): <input id="config-window-time" type="number" min=0.01 max=10 step=0.01 value=1 style="width:60px"></br></br>
+					Add a label for each device: <input class="checkbox" id="config-add-label" type="checkbox"></br></br>
+					Create one output for each device: <input class="checkbox" id="config-split-output" type="checkbox"></br></br>	
+					Use relative times (from first window captured): <input class="checkbox" id="config-relative-time" type="checkbox"></br></br>	
+					Print feature names in output header: <input class="checkbox" id="config-print-headers" type="checkbox"></br></br>
+				</div>
+				<div class="capture-settings-subdiv">
+					<h5>Select Devices</h5>
+					<div>Capture only traffic of devices in the list. Leave blank to include all devices available in the network.</div></br>
+					<center>
+					<div style="border-bottom: 2px solid grey;width:90%;"><b>Device List</b></div>
+					<table id="selected-devices-list" class="table ftr-table" style="width:80%;">
+						<tr>
+							<th>#</th>
+							<th>MAC</th>
+							<th style="display:none">Label</th>
+							<th>Delete</th>
+						</tr>				
+					</table>
+					</center>
+					</br>
+					Add device: <input id="input-add-device" style="width:150px" type="text" placeholder="Insert device MAC">
+							<button id="btn-add-device" style="margin-left:5px; width:40px" class="btn cbi-button-save">+</button></br></br>
+							<div id="input-add-device-error">Invalid MAC address </div>
+				</div>
+			</div>
+			</br></br>
+			
+			<center>
+			<div id="feature-settings">
+				<h4 style="border-bottom: 2px solid grey;">Feature selection</h4>
+				
+				<table id="feature-table" class="table ftr-table">
+					
+					<tr style="font-weight:800;">
+						<th>Feature</th>
+						<th>Count</th>
+						<th>Sum</th>
+						<th>Mean</th>
+						<th>Median</th>
+						<th>Mode</th>
+						<th>Variance</th>
+						<th>StDev</th>
+						<th>Kurtosis</th>
+						<th>-</th>
+					</tr>
+				</table>
+				
+				</br></br>
+				
+				<h5>PDF features of Packet Length</h5>
+				<div style="border-bottom: 2px solid grey; padding-bottom:5px;">(count packets with size in range 100*[k, k+1] Bytes)</div>
+				<table id="pdf-feature-table" class="table ftr-table">
+					<tr style="font-weight:800;">
+						<th>Packet type</th>
+						<th>k=0</th>
+						<th>k=1</th>
+						<th>k=2</th>
+						<th>k=3</th>
+						<th>k=4</th>
+						<th>k=5</th>
+						<th>k=6</th>
+						<th>k=7</th>
+						<th>k=8</th>
+						<th>k=9</th>
+						<th>k=10</th>
+						<th>k=11</th>
+						<th>k=12</th>
+						<th>k=13</th>
+						<th>k=14</th>
+						<th>k=15</th>
+						<th>-</th>
+					</tr>
+				</table>
+				
+				
+				<div class="features-row">Number of <b>Local TCP Ports</b>: <input class="config-features-ipports checkbox" type="checkbox"></div>
+				<div class="features-row">Number of <b>Local UDP Ports</b>: <input class="config-features-ipports checkbox" type="checkbox"></div>
+				<div class="features-row">Number of <b>Remote TCP Ports</b>: <input class="config-features-ipports checkbox" type="checkbox"></div>
+				<div class="features-row">Number of <b>Remote UDP Ports</b>: <input class="config-features-ipports checkbox" type="checkbox"></div>
+				<div class="features-row">Number of <b>Remote IPs</b>: <input class="config-features-ipports checkbox" type="checkbox"></div>
+				
+				
+			</div>
+			</center>
+
+
+			<div class="error" id="config-error"> Insert a valid name...</div>
+			
+			</br></br></br>
+			<div id="new-config-buttons">
+				<button id="back-btn" class="btn cbi-button cbi-button-action" style="float:left">Back</button>
+				<button id="save-btn" class="btn cbi-button cbi-button-save" style="margin-left:4px;float:right">Save</button>
+				<input id="reset-btn" class="btn cbi-button cbi-button-reset" type="reset" style="float:right" value="Reset">
+			</div>
+		</form>
+	</div>
+</div>
+
+
+
+<script type="text/javascript">
+
+(function() {
+	String.prototype.replaceAll = function(search, replacement) {
+	    var target = this;
+	    return target.replace(new RegExp(search, 'g'), replacement);
+	};
+	
+	window.onload = function(){
+		var configChanged = false;	//true if the current config has changed
+		var newConfig = false;		//true if you are creating a new config
+		var oldName = "";			//save the old name of an existing config
+		var newConfigButton = document.getElementById("create-new-config");
+		var mainView = document.getElementById("main-view");
+		var configContainer = document.getElementById("new-config-tab-container");
+		var baseDirectory = "";
+		newConfigButton.addEventListener("click",function(){
+			newConfig = true;
+			configChanged = true;
+			document.getElementById("config-title").innerHTML ="New Configuration";
+			openConfigTab();
+		});
+		document.getElementById("config-add-label").addEventListener("change",function(){
+			showDevicesLabels(this.checked);
+		});
+		
+		var colonDict=["count","sum","mean","median","mode","variance","stdev","kurtosis"];
+		var featureDict  = {
+			"TCP Downlink Packet size":["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Uplink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Downlink Packet size": ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Uplink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Downlink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Uplink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Packet size"  : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Payload size"  : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Downlink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"TCP Uplink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"TCP Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"UDP Downlink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"UDP Uplink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"UDP Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"Total Downlink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"Total Uplink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
+			"Total Interarrival time"  : ["mean","median","variance","stdev","kurtosis"]
+		};
+		var pdfFeatureNames = ["TCP Downlink","TCP Uplink","TCP","UDP Downlink","UDP Uplink","UDP","Total Downlink","Total Uplink","Total"];
+		
+		
+		document.getElementById("back-btn").addEventListener("click",closeConfigTab);
+		document.getElementById("save-btn").addEventListener("click",saveConfig);
+		document.getElementById("reset-btn").addEventListener("click",resetConfigForm);
+		document.getElementById("capture-type").addEventListener("change",updateCaptureType);
+		document.querySelector("form").addEventListener("change",function(){configChanged=true;});
+		
+		
+		function updateExistingConfigsTab(configString){
+			document.getElementById("existing-configs-div").innerHTML="";document.getElementById("existing-configs-div").innerHTML="";
+			if(configString =="") return;
+			let allConfigs = (configString.replaceAll("'","\"")).split("\\n");
+			for(var i =0;i<allConfigs.length;i++){
+				jsonConf = JSON.parse(allConfigs[i]);
+				div = document.createElement("div");
+				div.classList.add("existing-config");
+				div.setAttribute("value",jsonConf["name"])
+				
+				let name = document.createElement("div");
+				name.classList.add("existing-config-field");
+				name.innerHTML = "Name: "+jsonConf["name"];
+				div.appendChild(name);
+					
+				let date = document.createElement("div");
+				date.classList.add("existing-config-field");
+				date.innerHTML = "Date: "+jsonConf["date"];
+				div.appendChild(date);
+				
+				let status = document.createElement("div");
+				status.classList.add("existing-config-field");
+				status.innerHTML = "Status: "+jsonConf["status"];
+				div.appendChild(status);
+					
+				btnDelete = createExistingConfigButton("Delete");
+				btnStop = createExistingConfigButton("Stop");
+				btnStart = createExistingConfigButton("Start");
+				if(jsonConf["status"] =="Running"){
+					disableButton(btnStart);
+					disableButton(btnDelete);
+				}
+				else
+					disableButton(btnStop);
+					
+				div.appendChild(btnDelete);
+				div.appendChild(createExistingConfigButton("Output"));
+				div.appendChild(btnStop);
+				div.appendChild(btnStart);
+				div.appendChild(createExistingConfigButton("Open"));
+				//append new row
+				document.getElementById("existing-configs-div").appendChild(div);
+			}
+		}
+	
+		function loadExistingConfigs(getBase=true){
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","get_features_configs")%>'
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						responseString = responseString.slice(1,-1);
+						updateExistingConfigsTab(responseString);
+					}
+				}
+			});
+			if(getBase){
+				url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","get_base_directory")%>'
+				ajaxRequest("GET",url,function(req){
+					if(req.readyState == 4){
+						let responseString = req.responseText;
+						if(req.status == 200){
+							responseString = responseString.slice(1,-1);
+							responseString = responseString.replace(/\\/g, "");
+							baseDirectory = responseString;
+							document.getElementById("base-directory-input").value = baseDirectory;
+							
+						}
+					}
+				});
+			}
+		}
+		loadExistingConfigs(true);
+		
+		//append the listener for the changeDirectory function
+		document.getElementById("change-dir-btn").addEventListener("click",changeBaseDirectory);
+		
+		function changeBaseDirectory(){
+			if(document.getElementById("base-directory-input").value != baseDirectory){
+				data = {"baseDirectory":(document.getElementById("base-directory-input").value).trim()};
+				let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","change_base_directory")%>'
+				ajaxRequest("POST",url,function(req){
+					if(req.readyState == 4){
+						let responseString = req.responseText;
+						if(req.status == 200){
+							responseString = responseString.slice(1,-1);
+							baseDirectory = document.getElementById("base-directory-input").value;
+							updateExistingConfigsTab(responseString);
+						}
+						else{//if error set back correct dir
+							document.getElementById("base-directory-input").value = baseDirectory;
+						}
+					}
+				},prepareHttpData(data));
+			}
+		}
+		
+		function createExistingConfigButton(name){
+			let button = document.createElement("button");
+			button.classList.add("btn");
+			button.classList.add("button-existing-config");
+			button.innerHTML = name;
+			let fun = null;
+			if(name=="Delete"){
+				button.classList.add("cbi-button-reset");
+				fun = deleteExistingConfig;
+			}
+			else if(name=="Output"){
+				button.classList.add("cbi-button-action");
+				fun = downloadOutputExistingConfig;
+			}
+			else if(name=="Stop"){
+				button.classList.add("cbi-button-reset");
+				fun = stopExistingConfig;
+			}
+			else if(name=="Start"){
+				button.classList.add("cbi-button-save");
+				fun = startExistingConfig;
+			}
+			else if(name=="Open"){
+				button.classList.add("cbi-button-action");
+				fun = openExistingConfig;
+			}
+			button.addEventListener("click",fun);
+			return button;
+		}
+		
+		function showDevicesLabels(checked){
+			let tableRows = document.querySelectorAll("#selected-devices-list tr");
+			for(var i=0;i<tableRows.length;i++){
+				tableRows[i].children[2].style.display = (checked) ? "block":"none";
+			}
+			
+		}
+		function deleteExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","delete_existing_config")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200)
+						button.parentNode.parentNode.removeChild(button.parentNode);
+					else
+						console.log("error on delete: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function openExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","open_existing_config")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						document.getElementById("config-name").value = configName;
+						document.getElementById("config-title").innerHTML ="Edit configuration: "+configName;
+						oldName = configName;
+						getConfigDescription({"cath":2,"configName":configName});
+						parseExistingConfigParams(responseString);
+						//open the tab for the new config
+						newConfig = false;
+						openConfigTab();
+					}
+					else
+						console.log("error on open: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function downloadOutputExistingConfig(e){
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","prepare_config_output")%>';
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			disableButton(this);	//'this' represents the button
+			e.target.classList.add("spinning");
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						window.location.href = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","download_config_output")%>'+"?configName="+configName;
+						e.target.classList.remove("spinning");
+						enableButton(e.target);
+					}
+					else if(req.status ==0 || req.status ==202){
+						checkOutputReadiness(e.target);
+						
+					}
+					else{
+						console.log("error on downloading output: ",responseString);
+						e.target.classList.remove("spinning");
+						enableButton(e.target);
+					}
+				}
+			},prepareHttpData(data),timeout=10);
+		}
+		
+		function checkOutputReadiness(button){
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","check_output_readiness")%>';
+			let configName = button.parentNode.getAttribute("value");
+			console.log("check: ",configName);
+			let data = {"configName":configName};
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						window.location.href = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","download_config_output")%>'+"?configName="+configName;
+						enableButton(button);
+						button.classList.remove("spinning");
+					}
+					else if(req.status == 202){
+						setTimeout(function () {	//wait 1.5 seconds and check again
+							checkOutputReadiness(button);
+						}, 1500)
+					}
+					else{
+						console.log("error on downloading output: ",responseString);
+						enableButton(button);
+						button.classList.remove("spinning");
+					}
+				}
+			},prepareHttpData(data),timeout=10);
+		}
+		
+		function parseExistingConfigParams(resString){
+			//console.log("res: ",resString);
+			resString = resString.slice(1,-1);
+			let configParams = resString.split("\\n");
+			let ip = "";
+			let allDevices = [];
+			let labels = [];
+			for(var i =0;i<configParams.length;i++){
+				configParams[i] = configParams[i].replaceAll("==","_eqeq_");
+				configParams[i] = configParams[i].replaceAll(">=","_geq_");
+				configParams[i] = configParams[i].replaceAll("<=","_leq_");
+				configParams[i] = configParams[i].replaceAll("!=","_neq_");
+				
+				//Set the feature table
+				if(configParams[i].includes("featuresList")){ //featuresList here
+					value = configParams[i];
+					//process the list with checkbox
+					value = value.replaceAll(" ","");
+					value = value.replace("featuresList=","");
+					value = value.replaceAll("=",":");
+					value = value.slice(1,-1);	//remove the parentesis ()
+					value = value.replaceAll("'",'"');	//replace the ' with "" for json parsing
+					value = value.replaceAll("},{","}\t{");
+					//console.log("val: ",value);
+					let allFeatures = value.split("\t");
+					let tableRows = document.querySelectorAll("#feature-table tr");
+
+					//select the check for all rows in the features
+					for(var j = 0;j<Object.keys(featureDict).length;j++){
+						let jsonFtr = JSON.parse(allFeatures[j]);
+						//console.log("value is: ",jsonFtr["select"]);
+						let select = parseInt(jsonFtr["select"]);
+						let columns = tableRows[j+1].querySelectorAll("td");	//array of columns
+						for(var k=1;k<columns.length-1;k++){		//take cells (skip first and last as name and "all" button
+							let checkbox = columns[k].querySelector("input[type='checkbox']")
+							if(checkbox != null){
+								if( ((select >> (k-1) )&1))
+									checkbox.checked = true;
+								else
+									checkbox.checked = false;
+							}
+						}
+					}
+					
+					//select the check for all rows in the PDF features (same as before but for PDF)
+					tableRows = document.querySelectorAll("#pdf-feature-table tr");
+					for(var j = 0;j<pdfFeatureNames.length;j++){
+						let jsonFtr = JSON.parse(allFeatures[Object.keys(featureDict).length + j]);
+						//console.log("value is: ",jsonFtr["select"]);
+						let select = parseInt(jsonFtr["select"]);
+						let columns = tableRows[j+1].querySelectorAll("td");	//array of columns
+						for(var k=1;k<columns.length-1;k++){		//take cells (skip first and last as name and "all" button
+							let checkbox = columns[k].querySelector("input[type='checkbox']")
+							if(checkbox != null){
+								if( ((select >> (k-1) )&1))
+									checkbox.checked = true;
+								else
+									checkbox.checked = false;
+							}
+						}
+					}
+					
+					//IP-Ports checkbox fill
+					jsonFtr = JSON.parse(allFeatures[allFeatures.length-1]);
+					let ipPorts = parseInt(jsonFtr["select"]);
+					let ipPortsCheckboxes = document.querySelectorAll(".config-features-ipports");
+					for(var j=0;j<5;j++){
+						
+						if( ( ipPorts>>j ) & 1)
+							ipPortsCheckboxes[j].checked = true;
+						else
+							ipPortsCheckboxes[j].checked = false;
+					}
+				}
+				//set devices in the list
+				else if(configParams[i].includes("devicesMacs")){
+					value = configParams[i];
+					value = value.replaceAll(" ","");
+					value = value.replace("devicesMacs=","");
+					value = value.replaceAll("'",'"')
+					value = value.slice(1,-1);	//remove the parentesis () for the array
+					allDevices = value.split(",");
+					
+					
+					//add devices into the table (moved after end of parsing parameters)
+					/*for(var j=0;j<allDevices.length;j++){
+						if(allDevices[j]!=""){
+							allDevices[j] = allDevices[j].slice(1,-1);
+							addDeviceToList(allDevices[j].toUpperCase());
+						}
+					}*/
+				}
+				//set labels in the list
+				else if(configParams[i].includes("labels")){
+					value = configParams[i];
+					value = value.replaceAll(" ","");
+					value = value.replace("labels=","");
+					value = value.slice(1,-1);	//remove the parentesis ()
+					labels = value.split(",");
+				}
+				//Set all the parameters
+				else{
+					[key,value] = configParams[i].split("=");
+					key = key.trim();
+					value = value.trim();
+					switch(key){
+						case "printHeaders":
+							document.getElementById("config-print-headers").checked = (value!= 0);
+							break;
+							
+						case "addLabel":
+							document.getElementById("config-add-label").checked = (value!= 0);
+							showDevicesLabels(value!= 0);
+							break;
+						case "splitByMac":
+							document.getElementById("config-split-output").checked = (value!= 0);
+							break;
+						case "relativeTime":
+							document.getElementById("config-relative-time").checked = (value!= 0);
+							break;
+						case "winTime":
+							document.getElementById("config-window-time").value = parseFloat(value);
+							break;
+						case "interface":
+							document.getElementById("interface-select").value = value.slice(1,-1);	//remove the two apices from string
+							document.getElementById("capture-type").value = 0;
+							updateCaptureType();
+							break;
+						case "readFile":
+							value = value.replace(/\\/g, "");
+							document.getElementById("config-readfile").value = value.slice(1,-1);	//remove the two apices from string
+							document.getElementById("capture-type").value = 1;
+							updateCaptureType();
+							break;
+						case "captureFilter":
+							value = value.replaceAll("_eqeq_","==");
+							value = value.replaceAll("_leq_","<=");
+							value = value.replaceAll("_geq_",">=");
+							value = value.replaceAll("_neq_","!=");
+							
+							document.getElementById("config-capture-filter").value = value.slice(1,-1);
+							break;
+						case "ip":
+							ip = value.slice(1,-1);
+							break;
+						case "mask":
+							ip = ip + "/"+parseInt(value);
+							document.getElementById("config-router-addr").value = ip;
+							break;
+						default:
+							
+					}
+				}
+			}
+			if(allDevices.length >0)
+				addDevicesToTable(allDevices,labels);
+		}
+		
+		function addDevicesToTable(devices,labels){
+			//add devices into the table (will be done at the end!
+			for(var i=0;i<devices.length;i++){
+				if(devices[i]!=""){
+					if(labels[i] == null) 
+						labels[i] = i+1;
+					devices[i] = devices[i].slice(1,-1);
+					addDeviceToList(devices[i].toUpperCase(),labels[i]);
+				}
+			}
+		
+		}
+		
+		function startExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","start_existing_config")%>'
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						button.parentNode.querySelectorAll(".existing-config-field")[2].innerHTML = "Status: Running";
+						//disable start button
+						disableButton(button);
+						//enable stop button
+						enableButton(button.parentNode.querySelectorAll("button")[2]);
+						//disable delete button
+						disableButton(button.parentNode.querySelectorAll("button")[0]);
+					}
+					else
+						console.log("error on start: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function stopExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","stop_existing_config")%>'
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						button.parentNode.querySelectorAll(".existing-config-field")[2].innerHTML = "Status: Stopped";
+						//disable stop button
+						disableButton(button);
+						//enable start button
+						enableButton(button.parentNode.querySelectorAll("button")[3]);
+						//enable delete button
+						enableButton(button.parentNode.querySelectorAll("button")[0]);
+						//console.log( req.responseText);
+					}
+					else
+						console.log("error on stop: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		(function buildFeatureTable(){
+			//build feature table
+			for(var featureName in featureDict){
+				let tr = document.createElement("tr");
+				let td = document.createElement("td");
+				tr.appendChild(td);
+				td.innerHTML = featureName;
+				for(let i=0;i<colonDict.length;i++){
+					td = document.createElement("td");
+					if(featureDict[featureName].includes(colonDict[i])){
+						let checkbox = document.createElement("input");
+						checkbox.setAttribute("type","checkbox");
+						checkbox.setAttribute("name",featureName.replaceAll(" ","")+"-"+colonDict[i])
+						td.appendChild(checkbox);
+					}
+					else
+						td.innerHTML = "-";
+					tr.appendChild(td);
+				}
+				td = document.createElement("td");
+				let btn = document.createElement("button");
+				btn.addEventListener("click",selectAllFeaturesInRow);
+				btn.classList.add("btn");
+				btn.innerHTML = "All";
+				td.appendChild(btn);
+				tr.appendChild(td);
+				document.querySelector("#feature-table tbody").appendChild(tr);
+			
+			};
+			
+			//build pdf feature table
+			for(let i in pdfFeatureNames){
+				let tr = document.createElement("tr");
+				let td = document.createElement("td");
+				tr.appendChild(td);
+				td.innerHTML = "N. of "+pdfFeatureNames[i]+" packets";
+				for(let i=0;i<16;i++){
+					td = document.createElement("td");
+					let checkbox = document.createElement("input");
+					checkbox.setAttribute("type","checkbox");
+					td.appendChild(checkbox);
+					tr.appendChild(td);
+				}
+				td = document.createElement("td");
+				let btn = document.createElement("button");
+				btn.addEventListener("click",selectAllFeaturesInRow);
+				btn.classList.add("btn");
+				btn.innerHTML = "All";
+				td.appendChild(btn);
+				tr.appendChild(td);
+				document.querySelector("#pdf-feature-table tbody").appendChild(tr);
+			
+			};
+		})();
+		
+		function openConfigTab(){
+			mainView.style.display = "None";
+			configContainer.style.display = "block";
+			updateSelectPredefinedConfig();
+		}
+		
+		//get the available configs to copy the settings from
+		function updateSelectPredefinedConfig(){
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","get_predefined_configs")%>';
+			ajaxRequest("GET",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					responseString = responseString.replaceAll("\\\"","");
+					if(req.status == 200){
+						let select = document.getElementById("select-predefined-config");
+						select.innerHTML = "<option value=''></option>"; //reset the select
+						//console.log("res: ",responseString);
+						let configs = responseString.split("\\t");
+						//console.log(configs);
+						
+						if(configs[0] != ""){
+							let predefinedVec = configs[0].split("\\n");
+							
+							for(let i=0;i<predefinedVec.length;i++){
+								let opt = document.createElement("option");
+								opt.setAttribute("value","1 "+predefinedVec[i]);
+								opt.innerHTML = "Predefined: "+predefinedVec[i];
+								select.appendChild(opt);
+							}
+						}
+						if(configs[1] != ""){
+							let existingVec = configs[1].split("\\n");
+							for(let i=0;i<existingVec.length;i++){
+								let opt = document.createElement("option");
+								opt.setAttribute("value","2 "+existingVec[i]);
+								opt.innerHTML = "User-defined: "+existingVec[i];
+								select.appendChild(opt);
+							}
+						}
+					}
+					else{
+						console.log("error: ",responseString);
+					}
+					
+				}
+			});
+		
+		}
+		//append change event for the "load predefined config" select
+		document.getElementById("select-predefined-config").addEventListener("change",function(){
+			if(this.value=="")
+				return;
+			document.getElementById("predefined-config-loading").classList.add("spinning");
+			let val = (this.value).split(" ");
+			let dataJson = {"cath":val[0],"configName":val[1]};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","load_predefined_config")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						//reset the form and set the loaded parameters (take the name)
+						let configName = document.getElementById("config-name").value;
+						resetConfigForm();
+						document.getElementById("config-name").value = configName;
+						getConfigDescription(dataJson);
+						parseExistingConfigParams(responseString);
+					}
+					else{
+						this.value="";
+						console.log("error: ",responseString);
+					}
+					document.getElementById("predefined-config-loading").classList.remove("spinning");
+				}
+			},prepareHttpData(dataJson));
+		});
+	
+		function getConfigDescription(dataJson){
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","get_config_description")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						document.getElementById("config-description").value = responseString;
+					}
+					else
+						console.log("error: ",responseString);
+				}
+			},prepareHttpData(dataJson));
+		}
+		function closeConfigTab(e){
+			if(e) e.preventDefault();
+			configChanged = false;
+			newConfig = false;
+			/*
+			hideError();
+			document.forms[0].reset();
+			document.querySelector("#selected-devices-list tbody").innerHTML ="";
+			updateCaptureType(e);
+			*/
+			resetConfigTab();
+			oldName = "";
+			
+			mainView.style.display = "block";
+			configContainer.style.display = "None";
+		}
+		
+		function resetConfigTab(){
+			hideError();
+			document.forms[0].reset();
+			document.querySelector("#selected-devices-list tbody").innerHTML ='<tr><th>#</th><th>MAC</th><th style="display:none">Label</th><th>Delete</th></tr>';
+			document.getElementById("input-add-device-error").style.display="none";
+			updateCaptureType();
+		}
+		function resetConfigForm(e){
+			if(e) e.preventDefault();
+			configChanged = true;
+			/*
+			hideError();
+			document.querySelector("#selected-devices-list tbody").innerHTML ="";
+			document.forms[0].reset();
+			updateCaptureType(e);
+			*/
+			resetConfigTab();
+			if(!newConfig){
+				document.getElementById("config-name").value = oldName;
+			}
+		}
+		
+		function saveConfig(e){
+			if(e) e.preventDefault();
+			if(!configChanged)
+				return;
+			document.getElementById("save-btn").classList.add("spinning");
+			hideError();
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","save_config")%>';
+
+			let dataJson = checkConfigData();
+			
+			if(!dataJson){	//error in the data, do not send the request!
+				document.getElementById("save-btn").classList.remove("spinning");
+			}
+			else{
+				ajaxRequest("POST",url,function(req){
+					if(req.readyState == 4){
+						let responseString = req.responseText;
+						document.getElementById("save-btn").classList.remove("spinning");
+						if(req.status == 200){
+							loadExistingConfigs();	//update existing configs and go back
+							closeConfigTab();
+							//console.log("response: ",responseString);
+						}
+						else{
+							displayError(responseString);
+						}
+						
+					}
+				},prepareHttpData(dataJson));
+			}
+			configChanged = false;
+		}
+		
+
+		//validate input data for saved configuration
+		function checkConfigData(){
+			let jsonData = {};
+			let configName = document.getElementById("config-name").value;
+			
+			if(!configName || configName==""){
+				displayError("Insert a valid name for configuration.");
+				return null;
+			}
+			
+			if(!newConfig)
+				jsonData["oldName"] = oldName;
+				
+			jsonData["configName"] = configName;
+			
+			let captureFilter = document.getElementById("config-capture-filter").value;
+			if(captureFilter.trim() != "")
+				jsonData["captureFilter"]=captureFilter;
+			
+			let configWinTime=document.getElementById("config-window-time").value;
+			if(!configWinTime || parseFloat(configWinTime)<0.01 || parseFloat(configWinTime)>10){
+				displayError("Invalid window time. It must be a number in range [0.1 , 10]");
+				//console.log("time: "+configWinTime);
+				return null;
+			}
+			jsonData["windowTime"]=parseFloat(configWinTime);
+			jsonData["addLabel"] = (document.getElementById("config-add-label").checked)? 1:0;
+			
+			jsonData["printHeaders"] = (document.getElementById("config-print-headers").checked)? 1:0;
+			jsonData["splitByMac"] = (document.getElementById("config-split-output").checked)? 1:0;
+			jsonData["relativeTime"] = (document.getElementById("config-relative-time").checked)? 1:0;
+			jsonData["description"] = document.getElementById("config-description").value;
+			jsonData["features"] = getFeatureVector();
+			devicesVector = getDevicesVector();
+			if(devicesVector.length>0)
+				jsonData["devices"] = devicesVector;
+				
+			labelsVector = getLabelsVector();
+			if(labelsVector.length>0)
+				jsonData["labels"] = labelsVector;
+				
+			//append interface or the filepath
+			if(document.getElementById("capture-type").value==0)
+				jsonData["interface"] = document.getElementById("interface-select").value;
+			else{
+				jsonData["readFile"] = document.getElementById("config-readfile").value;
+				let routerAddr = document.getElementById("config-router-addr").value;
+				if(!checkRouterAddr(routerAddr)){
+					displayError("Invalid router address.");
+					return null;
+				}
+				jsonData["routerAddr"] = routerAddr;
+			}
+			
+			return jsonData;
+		}
+		
+		function checkRouterAddr(addrString){
+			let addr = addrString.split("/");
+			if(addr.length <2) return false;
+			let ip = addr[0];
+			let mask = parseInt(addr[1]);
+			if(mask <0 || mask > 32)
+				return false;
+			if(!ip.match(/^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/))
+				return false;
+			return true
+		}
+		//enable a button
+		function enableButton(btn){
+			btn.removeAttribute("readonly");
+		}
+		//disable a button
+		function disableButton(btn){
+			btn.setAttribute("readonly",true);
+		}
+		//prepare features to send to server
+		function getFeatureVector(){
+			let ftrRows = document.querySelectorAll("#feature-table tr");
+			featureSelect = [];
+			for(var i=1;i<ftrRows.length;i++){
+				featureSelect.push(featureRowToInt(ftrRows[i]));
+			}
+			
+			let pdfFtrRows = document.querySelectorAll("#pdf-feature-table tr");
+			for(var i=1;i<pdfFtrRows.length;i++){
+				featureSelect.push(featureRowToInt(pdfFtrRows[i]));
+			}
+			featureSelect.push(getIpPortsInt());
+			//console.log("featureSelect is: ",featureSelect);
+			return featureSelect;
+		}
+		//prepare devices macs to send to server
+		function getDevicesVector(){
+			let rows = document.querySelectorAll("#selected-devices-list tr");
+			let devices = [];
+			for(var i =1;i<rows.length;i++){
+				let td = rows[i].querySelectorAll("td")[1];
+				devices.push(td.innerHTML);
+			}
+			return devices;
+		
+		}
+		//prepare labels to send to server
+		function getLabelsVector(){
+			let labels = [];
+			if(!document.getElementById("config-add-label").checked) {
+				return labels;
+			}
+			labelsInputs = document.querySelectorAll(".device-label");
+			for(var i =0;i<labelsInputs.length;i++){
+				if(labelsInputs[i].value.trim()=="")
+					labelsInputs[i].value = 0;
+				labels.push(parseInt(labelsInputs[i].value));
+			}
+			return labels;
+		}
+		
+		function displayError(message){
+			let err = document.getElementById("config-error");
+			if(message)
+				err.innerHTML = message;
+			err.style.display="block";
+		}
+		
+		function hideError(){
+			document.getElementById("config-error").style.display="none";
+		}
+		
+		function ajaxRequest(method, url, cback, formElement=null, reset = true,timeout = 4) {
+			var req = new XMLHttpRequest();
+			req.timeout = timeout*1000;
+			req.onreadystatechange = function() {
+				cback(req);
+			};
+			req.open(method, url);
+			if (formElement == null) {
+				req.send();
+			} else {
+				req.send(new FormData(formElement));
+			}
+			if (formElement !== null && reset === true) {
+				formElement.reset();
+			}
+		}
+		//translate a json into a form element to be sent to the server
+		function prepareHttpData(jsonData){
+			var form = document.createElement("form");
+			for(key in jsonData){
+				let input = document.createElement("input");
+				input.setAttribute("name",key);
+				input.setAttribute("value",String(jsonData[key]));
+				form.appendChild(input);
+			}
+			return form;
+		}
+		//update the capture type view (if live show interface, if pcap show pcap name and router address
+		function updateCaptureType(e){
+			if (document.getElementById("capture-type").value==0){
+				document.getElementById("file-select-div").style.display="none";
+				document.getElementById("interface-select-div").style.display="block";
+			}
+			else{
+				document.getElementById("file-select-div").style.display="block";
+				document.getElementById("interface-select-div").style.display="none";
+			}
+		}
+	
+		function selectAllFeaturesInRow(e){
+			e.preventDefault();
+			configChanged = true;
+			let elements = this.parentNode.parentNode.querySelectorAll("input[type='checkbox']");
+			let chk = elements[0].checked;
+			elements.forEach(elem => {
+				elem.checked = !chk;
+			});
+		}
+		
+		function featureRowToInt(row){
+			let res = 0;
+			let checkbox = null;
+			let cells = row.querySelectorAll("td");
+			for(var i=1;i<cells.length-1;i++){
+				checkbox = cells[i].querySelector("input[type='checkbox']");
+				if(checkbox!= null && checkbox.checked){
+					res = res + Math.pow(2,i-1);
+				}
+			}	
+			return res;
+		}
+		
+		function getIpPortsInt(){
+			let ipPortsCheckboxes = document.querySelectorAll(".config-features-ipports");
+			let res = 0;
+			for(var i=0;i<5;i++){
+				if(ipPortsCheckboxes[i].checked)
+					res = res + Math.pow(2,i);
+			}
+			return res;
+		}
+		
+		function removeDeviceFromList(e){
+			e.preventDefault();
+			configChanged=true;
+			thisRow = this.parentNode.parentNode;
+			thisRow.parentNode.removeChild(thisRow);
+			//fix other numbers
+			let tableRows = document.querySelectorAll("#selected-devices-list tbody tr");
+			for(var i=1;i<tableRows.length;i++){
+				tableRows[i].children[0].innerHTML = i;
+			}
+		}
+		
+		
+		
+		function checkMac(mac){
+			if(!mac.match(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/)){
+				document.getElementById("input-add-device-error").innerHTML = "Invalid MAC address";
+				return false;
+			}
+			let tableRows = document.querySelectorAll("#selected-devices-list tbody tr");
+			for(var i=1;i<tableRows.length;i++){
+				let macTd = tableRows[i].querySelectorAll("td")[1];
+				if(mac.toUpperCase() == macTd.innerHTML.toUpperCase()){
+					document.getElementById("input-add-device-error").innerHTML = "Device already in the list";
+					return false;
+				}
+			}
+			if(mac.toUpperCase() == "FF:FF:FF:FF:FF:FF"){
+				document.getElementById("input-add-device-error").innerHTML = "Cannot add device with broadcast address";
+				return false;
+			}
+			
+			
+			return true;
+		}
+		function addDeviceToList(mac,label){
+			//console.log("called: mac is ",mac);
+			let table = document.querySelector("#selected-devices-list tbody");
+			let row = document.createElement("tr");
+			let nTd = document.createElement("td");
+			let index = table.querySelectorAll("tr").length;
+			nTd.innerHTML = index;
+			let macTd = document.createElement("td");
+			macTd.innerHTML = mac.toUpperCase();
+			
+			let labelTd = document.createElement("td");
+			if(label==null)
+				label = index;
+			labelTd.innerHTML = '<input id="config-window-time" class="device-label" type="number" step="1" value='+label+' style="width:60px>">';
+			if(!document.getElementById("config-add-label").checked)
+				labelTd.style.display="none";
+				
+			let btnTd = document.createElement("td");
+			let btn = document.createElement("button");
+			
+			btn.classList.add("btn");
+			btn.classList.add("cbi-button-reset");
+			btn.innerHTML = "x";
+			btn.addEventListener("click",removeDeviceFromList);
+			btnTd.appendChild(btn);
+			
+			row.appendChild(nTd);
+			row.appendChild(macTd);
+			row.appendChild(labelTd);
+			row.appendChild(btnTd);
+			
+			table.appendChild(row)
+		
+		
+		}
+		document.getElementById("btn-add-device").addEventListener("click",clickAddDeviceToList);
+		document.getElementById("input-add-device").addEventListener("change",function(){document.getElementById("input-add-device-error").style.display="none";});
+		function clickAddDeviceToList(e){
+			e.preventDefault();
+			document.getElementById("input-add-device-error").style.display="none";
+			let mac = (document.getElementById("input-add-device").value).trim();
+			if(!checkMac(mac)){
+				document.getElementById("input-add-device-error").style.display="block";
+				return
+			}
+			addDeviceToList(mac);
+			document.getElementById("input-add-device").value = "";
+			configChanged=true;
+		}
+		
+	}//closes the window.onload
+})(); //closes the self-calling function (mother of the script)
+</script>
+<style>
+
+.border{
+	border: 2px solid black;
+	border-radius:4px;
+}
+.border.clickable{
+	background:linear-gradient(#fff,#fff 40%,#e6e6e6) no-repeat;
+}
+.existing-config{
+	border-bottom: 2px solid grey;
+	margin: 10px;
+	padding: 5px;
+	font-size:14px;
+	font-weight: 400;
+}
+.clickable{
+	cursor: pointer;
+}
+#new-config-tab{
+	padding: 0px 15px 40px 15px;	
+}
+
+#new-config-buttons{
+	bottom:0;
+}
+
+.ftr-table td{
+	text-align:center;
+}
+.ftr-table tr{
+	line-height:25px;
+	border-bottom:1px solid grey;
+}
+.ftr-table button{
+	line-height: 10px;
+}
+.error{
+	color: red;
+	font-weight:600;
+	border: 1px solid red;
+	text-align: center;
+	padding: 5px;
+	margin-top: 3px;
+	display: none;
+}
+.text-center{
+	text-align: center;
+}
+.button-existing-config{
+	position:relative;
+	bottom:5px;
+	line-height:80%;
+	margin:0 2px;
+	float:right;
+}
+.existing-config-field{
+	display:inline;
+	margin: 0 25px;
+}
+
+.capture-settings-subdiv{
+	padding: 10px;
+	display:inline-block;
+	float:left;
+	width: 50%;
+	height: auto;
+	min-height:350px;
+	text-align:center;
+}
+.checkbox{
+	margin-left: 5px !important;
+}
+.rmv-device{
+	font-weight:700;
+	color:red;
+}
+#input-add-device-error{
+	display:none;
+	color:red;
+	border: 1px solid red;
+	border-radius:3px;
+
+}
+.features-row{
+	border-bottom: 2px solid grey;
+	padding: 3px 0;
+}
+	
+#capture-settings{
+    min-height: 390px;
+}
+.device-label{
+	width:50px;
+	height: 20px;
+}
+</style>
+
+<%+footer%>

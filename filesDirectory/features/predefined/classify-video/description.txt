@@ -1,0 +1,2 @@
+This configuration can be used to classify video streaming traffic.
+
