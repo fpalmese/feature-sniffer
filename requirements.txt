@@ -1,2 +1,1 @@
-opkg install luci-compat, libpcap, libconfig, coreutils-sleep
-(opional:) tcpdump, nano, htop, openssh-sftp-server, 
+luci-compat libpcap libconfig coreutils-sleep
