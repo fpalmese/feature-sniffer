@@ -1,8 +1,7 @@
-
 module("luci.controller.admin.forensics",package.seeall)
-rootDirectory = "/home/forensics"
+homeDirectory = "/home/forensics"
 
-filesDirectory = tostring(luci.sys.exec("cat "..rootDirectory.."/init/baseDirectory")):gsub("\n", "")
+filesDirectory = tostring(luci.sys.exec("cat "..homeDirectory.."/init/baseDirectory")):gsub("\n", "")
 
 
 function index()
@@ -411,7 +410,7 @@ function handle_start_existing_config()
 	
 	
 	-- and start the config
-	luci.sys.call(rootDirectory.."/features/features-script "..filesDirectory.." "..configName)
+	luci.sys.call(homeDirectory.."/features/features-script "..filesDirectory.." "..configName)
 	luci.http.write_json("Feature capture started correctly")
 	
 end
@@ -664,7 +663,7 @@ function handle_change_base_directory()
 		luci.http.write_json("Invalid directory")
 		return
 	end
-	luci.sys.call("echo '"..baseDir.."' > "..rootDirectory.."/init/baseDirectory");
+	luci.sys.call("echo '"..baseDir.."' > "..homeDirectory.."/init/baseDirectory");
 	filesDirectory = baseDir
 	local out = get_all_configs()
 	luci.http.write_json(out)
