@@ -18,7 +18,7 @@ opkg update && opkg install requirements.txt
 - You are now ready to use Feature-Sniffer through your Access Point control panel, in the Forensics section of LuCI web interface.
 
 # Usage
-Once the Feature-Sniffer has been installed, go into your access point control panel: (your AP ip address in the url)
+Once the Feature-Sniffer has been installed, go into your access point control panel:
 Go to the Forensics section and you will have the following tab:
  ![home](https://user-images.githubusercontent.com/67421482/136049410-3b0c4f99-0b5f-4806-9077-abfda69d65c5.png)
 Create a new configuration with the button and insert your configuration parameters as you prefer. The configuration tab will be as follows:
