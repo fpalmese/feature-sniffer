@@ -20,6 +20,6 @@ opkg update && opkg install requirements.txt
 # Usage
 Once the Feature-Sniffer has been installed, go into your access point control panel: (your AP ip address in the url)
 Go to the Forensics section and you will have the following tab:
-  ![home](https://github.com/fpalmese/feature-sniffer/tree/main/images/home.png)
+ ![home](https://user-images.githubusercontent.com/67421482/136049410-3b0c4f99-0b5f-4806-9077-abfda69d65c5.png)
 Create a new configuration with the button and insert your configuration parameters as you prefer. The configuration tab will be as follows:
-  ![config](https://github.com/fpalmese/feature-sniffer/tree/main/images/config.png)
+![config](https://user-images.githubusercontent.com/67421482/136049439-2d8a724d-d33d-4f80-885b-0e1854cc071d.png)
