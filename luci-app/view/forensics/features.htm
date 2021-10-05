@@ -138,9 +138,9 @@ end
 				
 				</br></br>
 				
-				<h5>PDF features of Packet Length</h5>
+				<h5>PMF features of Packet Length</h5>
 				<div style="border-bottom: 2px solid grey; padding-bottom:5px;">(count packets with size in range 100*[k, k+1] Bytes)</div>
-				<table id="pdf-feature-table" class="table ftr-table">
+				<table id="pmf-feature-table" class="table ftr-table">
 					<tr style="font-weight:800;">
 						<th>Packet type</th>
 						<th>k=0</th>
@@ -533,7 +533,7 @@ end
 					}
 					
 					//select the check for all rows in the PDF features (same as before but for PDF)
-					tableRows = document.querySelectorAll("#pdf-feature-table tr");
+					tableRows = document.querySelectorAll("#pmf-feature-table tr");
 					for(var j = 0;j<pdfFeatureNames.length;j++){
 						let jsonFtr = JSON.parse(allFeatures[Object.keys(featureDict).length + j]);
 						//console.log("value is: ",jsonFtr["select"]);
@@ -760,7 +760,7 @@ end
 				btn.innerHTML = "All";
 				td.appendChild(btn);
 				tr.appendChild(td);
-				document.querySelector("#pdf-feature-table tbody").appendChild(tr);
+				document.querySelector("#pmf-feature-table tbody").appendChild(tr);
 			
 			};
 		})();
@@ -1011,7 +1011,7 @@ end
 				featureSelect.push(featureRowToInt(ftrRows[i]));
 			}
 			
-			let pdfFtrRows = document.querySelectorAll("#pdf-feature-table tr");
+			let pdfFtrRows = document.querySelectorAll("#pmf-feature-table tr");
 			for(var i=1;i<pdfFtrRows.length;i++){
 				featureSelect.push(featureRowToInt(pdfFtrRows[i]));
 			}
