@@ -261,7 +261,7 @@ function handle_save_config()
 		end
 		filecontent = filecontent..");\n"
 	end
-	if(labels~=nil and addLabel =="true") then
+	if(labels~=nil and addLabel ==1) then
 		cntDev=0
 		filecontent = filecontent.."labels= ("
 		labelsTable = split(labels,",")
