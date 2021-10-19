@@ -390,9 +390,11 @@ end
 			
 		}
 		function deleteExistingConfig(e){
+			let configName = this.parentNode.getAttribute("value");
+			if(!confirm("Are you sure you want to delete '"+configName+"'?"))
+				return;
 			var button = this;
 			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
-			let configName = this.parentNode.getAttribute("value");
 			let data = {"configName":configName};
 			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","delete_existing_config")%>';
 			ajaxRequest("POST",url,function(req){
