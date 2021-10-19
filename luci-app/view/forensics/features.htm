@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
 <%+header%>
 
 <%
@@ -27,7 +28,12 @@ end
 	</br></br>
 	
 	<div>
-		<div style="display:inline-block;position:relative;left:45%">
+		<div style="display:inline-block;position:relative;left:1%;max-width:15px;">
+			<div id="refresh-existing-configs" style="border:1px solid #4a4; padding:2px 11px;border-radius:14px" class="clickable">
+			<i class="bi bi-arrow-repeat"></i>
+			</div>
+		</div>
+		<div style="display:inline-block;position:relative;left:40%">
 			<h5>Existing configurations</h5>
 		</div>
 		<div style="display:inline-block; position:relative;float:right">
@@ -301,6 +307,8 @@ end
 		}
 	
 		function loadExistingConfigs(getBase=true){
+			document.querySelector("#refresh-existing-configs").classList.remove("clickable");
+			document.querySelector("#refresh-existing-configs i").classList.add("spinning");
 			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","get_features_configs")%>'
 			ajaxRequest("POST",url,function(req){
 				if(req.readyState == 4){
@@ -308,6 +316,8 @@ end
 					if(req.status == 200){
 						responseString = responseString.slice(1,-1);
 						updateExistingConfigsTab(responseString);
+						document.querySelector("#refresh-existing-configs i").classList.remove("spinning");
+						document.querySelector("#refresh-existing-configs").classList.add("clickable");
 					}
 				}
 			});
@@ -329,6 +339,10 @@ end
 		}
 		loadExistingConfigs(true);
 		
+		//append the listener for the refresh config button
+		document.getElementById("refresh-existing-configs").addEventListener("click",function(){
+			loadExistingConfigs(true);
+		});
 		//append the listener for the changeDirectory function
 		document.getElementById("change-dir-btn").addEventListener("click",changeBaseDirectory);
 		
@@ -1313,6 +1327,23 @@ end
 .device-label{
 	width:50px;
 	height: 20px;
+}
+#refresh-existing-configs i{
+	font-size:18px;
+	color:#4a4;
+	position:relative;
+	right:9px;
+	top:0.5px;
+}
+#refresh-existing-configs i.spinning{
+	position:relative;
+	right:16px;
+}
+.clickable{
+	cursor: pointer;
+}
+i:hover{
+	opacity:0.6;
 }
 </style>
 
