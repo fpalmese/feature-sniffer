@@ -223,24 +223,27 @@ end
 		
 		var colonDict=["count","sum","mean","median","mode","variance","stdev","kurtosis"];
 		var featureDict  = {
+			//packet size
 			"TCP Downlink Packet size":["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"TCP Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"TCP Uplink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"TCP Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"TCP Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"TCP Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"UDP Downlink Packet size": ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"UDP Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"UDP Uplink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"UDP Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"UDP Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"UDP Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"Total Downlink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"Total Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"Total Uplink Packet size" : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
-			"Total Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"Total Packet size"  : ["count","sum","mean","median","mode","variance","stdev","kurtosis"],
+			//payload size
+			"TCP Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"TCP Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"UDP Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Downlink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			"Total Uplink Payload size" : ["sum","mean","median","mode","variance","stdev","kurtosis"],
 			"Total Payload size"  : ["sum","mean","median","mode","variance","stdev","kurtosis"],
+			//interarrival
 			"TCP Downlink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
 			"TCP Uplink Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],
 			"TCP Interarrival time"  : ["mean","median","variance","stdev","kurtosis"],

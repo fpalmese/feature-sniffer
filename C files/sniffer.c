@@ -254,18 +254,18 @@ void printWindowFeatures(Window *window){
 	int size;
 	array(u_int) temp;
 	
-	//-------------------------------------------------------------------//
-	//			TCP					     //
-	//-------------------------------------------------------------------//
+
+	//--------------------------------------------------------------//
+	//			PACKET SIZE FEATURES			//
+	//--------------------------------------------------------------//
+
+	//-------TCP-----------//
 	//tcpDLsizes
 	array_calculate_print_features_int(currentFile,window->tcpDLsizes.data,window->tcpDLsizes.used,featureSelect[0]);
-	//tcpDLpld
-	array_calculate_print_features_int(currentFile,window->tcpPayloadDLsizes.data,window->tcpPayloadDLsizes.used,featureSelect[1]);
 	//tcpULsizes
-	array_calculate_print_features_int(currentFile,window->tcpULsizes.data,window->tcpULsizes.used,featureSelect[2]);
-	//tcpULpld
-	array_calculate_print_features_int(currentFile,window->tcpPayloadULsizes.data,window->tcpPayloadULsizes.used,featureSelect[3]);
+	array_calculate_print_features_int(currentFile,window->tcpULsizes.data,window->tcpULsizes.used,featureSelect[1]);
 
+	//tcpSizes
 	size = window->tcpDLsizes.used + window->tcpULsizes.used;
 	if(size>0){
 		array_init(temp,size);
@@ -275,36 +275,16 @@ void printWindowFeatures(Window *window){
 	}
 	else
 		array_init(temp,1);
-	//tcpSizes
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[2]);
 	array_free(temp);
 	
-	size = window->tcpPayloadDLsizes.used + window->tcpPayloadULsizes.used;
-	if(size>0){
-		array_init(temp,size);
-		memcpy(temp.data,window->tcpPayloadDLsizes.data,sizeof(u_int)*window->tcpPayloadDLsizes.used);
-		memcpy(temp.data+window->tcpPayloadDLsizes.used,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
-		temp.used = size;
-	}
-	else
-		array_init(temp,1);
-	//tcpPayload
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[5]);
-	array_free(temp);
-	
-	//-------------------------------------------------------------------//
-	//			UDP					     //
-	//-------------------------------------------------------------------//
+	//-------UDP-----------//
 	//udpDLsizes
-	array_calculate_print_features_int(currentFile,window->udpDLsizes.data,window->udpDLsizes.used,featureSelect[6]);
-	//udpDLpld
-	array_calculate_print_features_int(currentFile,window->udpPayloadDLsizes.data,window->udpPayloadDLsizes.used,featureSelect[7]);
+	array_calculate_print_features_int(currentFile,window->udpDLsizes.data,window->udpDLsizes.used,featureSelect[3]);
 	//udpULsizes
-	array_calculate_print_features_int(currentFile,window->udpULsizes.data,window->udpULsizes.used,featureSelect[8]);
-	//udpULpld
-	array_calculate_print_features_int(currentFile,window->udpPayloadULsizes.data,window->udpPayloadULsizes.used,featureSelect[9]);
-	
+	array_calculate_print_features_int(currentFile,window->udpULsizes.data,window->udpULsizes.used,featureSelect[4]);
 
+	//udpSizes
 	size = window->udpDLsizes.used + window->udpULsizes.used;
 	if(size>0){
 		array_init(temp,size);
@@ -314,28 +294,11 @@ void printWindowFeatures(Window *window){
 	}
 	else
 		array_init(temp,1);
-	//udpSizes
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[10]);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[5]);
 	array_free(temp);
 	
-	size = window->udpPayloadDLsizes.used + window->udpPayloadULsizes.used;
-	if(size>0){
-		array_init(temp,size);
-		memcpy(temp.data,window->udpPayloadDLsizes.data,sizeof(u_int)*window->udpPayloadDLsizes.used);
-		memcpy(temp.data+window->udpPayloadDLsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
-		temp.used = size;
-	}
-	else
-		array_init(temp,1);
-
-	//udpPayload
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[11]);
-	array_free(temp);
-
-	//-------------------------------------------------------------------//
-	//			Total DL				     //
-	//-------------------------------------------------------------------//
-
+	//---------TOT-----------//
+	//totDLsizes
 	size = window->tcpDLsizes.used + window->udpDLsizes.used;
 	if(size>0){
 		array_init(temp,size);
@@ -345,28 +308,10 @@ void printWindowFeatures(Window *window){
 	}
 	else
 		array_init(temp,1);
-
-	//udpPayload
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[12]);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[6]);
 	array_free(temp);
-	//----------payload----------//
-	size = window->tcpPayloadDLsizes.used + window->udpPayloadDLsizes.used;
-	if(size>0){
-		array_init(temp,size);
-		memcpy(temp.data,window->tcpPayloadDLsizes.data,sizeof(u_int)*window->tcpPayloadDLsizes.used);
-		memcpy(temp.data+window->tcpPayloadDLsizes.used,window->udpPayloadDLsizes.data,sizeof(u_int)*window->udpPayloadDLsizes.used);
-		temp.used = size;
-	}
-	else
-		array_init(temp,1);
 
-	//udpPayload
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[13]);
-	array_free(temp);
-	//-------------------------------------------------------------------//
-	//			Total UL				     //
-	//-------------------------------------------------------------------//
-
+	//totULsizes
 	size = window->tcpULsizes.used + window->udpULsizes.used;
 	if(size>0){
 		array_init(temp,size);
@@ -376,30 +321,10 @@ void printWindowFeatures(Window *window){
 	}
 	else
 		array_init(temp,1);
-
-	//udpPayload
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[14]);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[7]);
 	array_free(temp);
 	
-	
-	//----------payload----------//
-	size = window->tcpPayloadULsizes.used + window->udpPayloadULsizes.used;
-	if(size>0){
-		array_init(temp,size);
-		memcpy(temp.data,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
-		memcpy(temp.data+window->tcpPayloadULsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
-		temp.used = size;
-	}
-	else
-		array_init(temp,1);
-
-	//udpPayload
-	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[15]);
-	array_free(temp);
-	//-------------------------------------------------------------------//
-	//			Total					     //
-	//-------------------------------------------------------------------//
-	
+	//totSizes
 	size = window->tcpDLsizes.used + window->udpDLsizes.used + window->tcpULsizes.used + window->udpULsizes.used;
 	if(size>0){
 		array_init(temp,size);
@@ -411,12 +336,79 @@ void printWindowFeatures(Window *window){
 	}
 	else
 		array_init(temp,1);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[8]);
+	array_free(temp);
 
+
+	//--------------------------------------------------------------//
+	//			PAYLOAD SIZE FEATURES			//
+	//--------------------------------------------------------------//
+	
+	//--------TCP----------//
+	//tcpDLpld
+	array_calculate_print_features_int(currentFile,window->tcpPayloadDLsizes.data,window->tcpPayloadDLsizes.used,featureSelect[9]);
+	//tcpULpld
+	array_calculate_print_features_int(currentFile,window->tcpPayloadULsizes.data,window->tcpPayloadULsizes.used,featureSelect[10]);
+	//tcpPayload
+	size = window->tcpPayloadDLsizes.used + window->tcpPayloadULsizes.used;
+	if(size>0){
+		array_init(temp,size);
+		memcpy(temp.data,window->tcpPayloadDLsizes.data,sizeof(u_int)*window->tcpPayloadDLsizes.used);
+		memcpy(temp.data+window->tcpPayloadDLsizes.used,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
+		temp.used = size;
+	}
+	else
+		array_init(temp,1);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[11]);
+	array_free(temp);
+	
+	//--------UDP----------//
+	//udpDLpld
+	array_calculate_print_features_int(currentFile,window->udpPayloadDLsizes.data,window->udpPayloadDLsizes.used,featureSelect[12]);
+	//udpULpld
+	array_calculate_print_features_int(currentFile,window->udpPayloadULsizes.data,window->udpPayloadULsizes.used,featureSelect[13]);
 	//udpPayload
+	size = window->udpPayloadDLsizes.used + window->udpPayloadULsizes.used;
+	if(size>0){
+		array_init(temp,size);
+		memcpy(temp.data,window->udpPayloadDLsizes.data,sizeof(u_int)*window->udpPayloadDLsizes.used);
+		memcpy(temp.data+window->udpPayloadDLsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
+		temp.used = size;
+	}
+	else
+		array_init(temp,1);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[14]);
+	array_free(temp);
+	
+	//--------TOT----------//
+	//totDLpld
+	size = window->tcpPayloadDLsizes.used + window->udpPayloadDLsizes.used;
+	if(size>0){
+		array_init(temp,size);
+		memcpy(temp.data,window->tcpPayloadDLsizes.data,sizeof(u_int)*window->tcpPayloadDLsizes.used);
+		memcpy(temp.data+window->tcpPayloadDLsizes.used,window->udpPayloadDLsizes.data,sizeof(u_int)*window->udpPayloadDLsizes.used);
+		temp.used = size;
+	}
+	else
+		array_init(temp,1);
+	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[15]);
+	array_free(temp);
+
+	//totULpld
+	size = window->tcpPayloadULsizes.used + window->udpPayloadULsizes.used;
+	if(size>0){
+		array_init(temp,size);
+		memcpy(temp.data,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
+		memcpy(temp.data+window->tcpPayloadULsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
+		temp.used = size;
+	}
+	else
+		array_init(temp,1);
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[16]);
 	array_free(temp);
 
-	//----------payload----------//
+	
+	//totPld
 	size = window->tcpPayloadDLsizes.used + window->udpPayloadDLsizes.used + window->tcpPayloadULsizes.used + window->udpPayloadULsizes.used;
 	if(size>0){
 		array_init(temp,size);
@@ -428,20 +420,19 @@ void printWindowFeatures(Window *window){
 	}
 	else
 		array_init(temp,1);
-
-	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[17]);
 	array_free(temp);
 
 
-	//-------------------------------------------------------------------//
-	//--------------------TCP INTERARRIVAL----------------------------//
-	//-------------------------------------------------------------------//
+	//--------------------------------------------------------------//
+	//		   INTERARRIVAL TIME FEATURES			//
+	//--------------------------------------------------------------//
+
 
 	double *inter=NULL;
 	array(double) temp_dbl;
 
-	//-------DL---------//
+	//-------TCP DL---------//
 	if(window->tcpDLtimes.used>=2){
 		size = window->tcpDLtimes.used-1;
 		timesToInter(&inter,window->tcpDLtimes.data,window->tcpDLtimes.used);
@@ -455,7 +446,7 @@ void printWindowFeatures(Window *window){
 		inter = NULL;
 	}
 	
-	//-------UL---------//
+	//-------TCP UL---------//
 	if(window->tcpULtimes.used>=2){
 		size = window->tcpULtimes.used-1;
 		timesToInter(&inter,window->tcpULtimes.data,window->tcpULtimes.used);
@@ -468,7 +459,7 @@ void printWindowFeatures(Window *window){
 		free(inter);
 		inter = NULL;
 	}	
-	//-------DL+UL--------//
+	//-------TCP DL+UL--------//
 	size = window->tcpDLtimes.used + window->tcpULtimes.used;
 	if(size>=2){
 		array_init(temp_dbl,size);
@@ -489,12 +480,8 @@ void printWindowFeatures(Window *window){
 		inter = NULL;
 	}
 
-
-	//-------------------------------------------------------------------//
-	//--------------------UDP INTERARRIVAL----------------------------//
-	//-------------------------------------------------------------------//
 	
-	//-------DL---------//
+	//-------UDP DL---------//
 	if(window->udpDLtimes.used>=2){
 		size = window->udpDLtimes.used-1;
 		timesToInter(&inter,window->udpDLtimes.data,window->udpDLtimes.used);
@@ -508,7 +495,7 @@ void printWindowFeatures(Window *window){
 		inter = NULL;
 	}
 	
-	//-------UL---------//
+	//-------UDP UL---------//
 	if(window->udpULtimes.used>=2){
 		size = window->udpULtimes.used-1;
 		timesToInter(&inter,window->udpULtimes.data,window->udpULtimes.used);
@@ -521,7 +508,7 @@ void printWindowFeatures(Window *window){
 		free(inter);
 		inter = NULL;
 	}	
-	//-------DL+UL---------//
+	//-------UDP DL+UL---------//
 	size = window->udpDLtimes.used + window->udpULtimes.used;
 	if(size>=2){
 		array_init(temp_dbl,size);
@@ -543,12 +530,8 @@ void printWindowFeatures(Window *window){
 	}
 
 
-	//-------------------------------------------------------------------//
-	//--------------------TOTAL (TCP+UDP) INTERARRIVAL-------------------//
-	//-------------------------------------------------------------------//
-
 	
-	//-------DL---------//
+	//-------TOT DL---------//
 	size = window->tcpDLtimes.used + window->udpDLtimes.used;
 	if(size>=2){
 		array_init(temp_dbl,size);
@@ -569,7 +552,7 @@ void printWindowFeatures(Window *window){
 		inter = NULL;
 	}
 
-	//-------UL---------//
+	//-------TOT UL---------//
 	size = window->tcpULtimes.used + window->udpULtimes.used;
 	if(size>=2){
 		array_init(temp_dbl,size);
@@ -590,7 +573,7 @@ void printWindowFeatures(Window *window){
 		inter = NULL;
 	}
 
-	//-------DL + UL---------//
+	//-------TOT DL + UL---------//
 	size = window->tcpDLtimes.used + window->udpDLtimes.used + window->tcpULtimes.used + window->udpULtimes.used;
 	if(size>=2){
 		array_init(temp_dbl,size);
@@ -759,23 +742,28 @@ Window* window_init(){
 	window->label = 0;
 	window->timestamp = 0.0;
 	window->device = malloc(sizeof(struct ether_addr));	//alloc mem for device addr (6 bytes)
-	array_init(window->udpDLsizes,25);
-	array_init(window->udpULsizes,25);
+
 	array_init(window->tcpDLsizes,25);
 	array_init(window->tcpULsizes,25);
-	array_init(window->udpPayloadULsizes,25);
-	array_init(window->udpPayloadDLsizes,25);
-	array_init(window->tcpPayloadULsizes,25);
+	array_init(window->udpDLsizes,25);
+	array_init(window->udpULsizes,25);
+
 	array_init(window->tcpPayloadDLsizes,25);
+	array_init(window->tcpPayloadULsizes,25);
+	array_init(window->udpPayloadDLsizes,25);
+	array_init(window->udpPayloadULsizes,25);
+
+	array_init(window->tcpDLtimes,25);
+	array_init(window->tcpULtimes,25);
+	array_init(window->udpDLtimes,25);
+	array_init(window->udpULtimes,25);
+
 	array_init(window->tcpPorts,10);
 	array_init(window->udpPorts,10);
 	array_init(window->remoteTCPPorts,10);
 	array_init(window->remoteUDPPorts,10);
-	array_init(window->udpDLtimes,25);
-	array_init(window->udpULtimes,25);
-	array_init(window->tcpDLtimes,25);
-	array_init(window->tcpULtimes,25);
 	array_init(window->remoteIps,25);
+
 	memset(window->tcpDLpdf,0,16*sizeof(int));
 	memset(window->tcpULpdf,0,16*sizeof(int));
 	memset(window->udpDLpdf,0,16*sizeof(int));	
@@ -1264,14 +1252,6 @@ int parse_arguments(int argc, char **argv){
 	return 0;
 }
 
-void print_bits(u_short x){
-	int i;
-	for(i=8*sizeof(x)-1; i>=0; i--) {
-		(x & (1 << i)) ? putchar('1') : putchar('0');
-	}
-	printf("\n");
-}
-
 //convert the timestamp (seconds, microseconds) into a double
 double time_to_double(long long sec,long long usec) {
 	double new_time = (((double) usec )/1000000) + (double)sec;
@@ -1285,22 +1265,26 @@ void window_free(Window *window){
 	window->index = 0;
 	window->label = 0;
 	free(window->device);
-	array_free(window->udpDLsizes);
-	array_free(window->udpULsizes);
+
 	array_free(window->tcpDLsizes);
 	array_free(window->tcpULsizes);
-	array_free(window->udpPayloadULsizes);
-	array_free(window->udpPayloadDLsizes);
-	array_free(window->tcpPayloadULsizes);
+	array_free(window->udpDLsizes);
+	array_free(window->udpULsizes);
+
 	array_free(window->tcpPayloadDLsizes);
+	array_free(window->tcpPayloadULsizes);
+	array_free(window->udpPayloadDLsizes);
+	array_free(window->udpPayloadULsizes);
+
+	array_free(window->tcpDLtimes);
+	array_free(window->tcpULtimes);
+	array_free(window->udpDLtimes);
+	array_free(window->udpULtimes);
+
 	array_free(window->tcpPorts);
 	array_free(window->udpPorts);
 	array_free(window->remoteTCPPorts);
 	array_free(window->remoteUDPPorts);
-	array_free(window->udpDLtimes);
-	array_free(window->udpULtimes);
-	array_free(window->tcpDLtimes);
-	array_free(window->tcpULtimes);
 	array_free(window->remoteIps);
 
 	memset(window->tcpDLpdf,0,16*sizeof(int));

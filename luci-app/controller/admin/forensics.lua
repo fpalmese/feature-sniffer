@@ -275,11 +275,18 @@ function handle_save_config()
 		filecontent = filecontent..");\n"
 	end
 	
-	local featureNames = {"TcpDLpckSz","TcpDLpldSz","TcpULpckSz","TcpULpldSz",
-	"TcpPckSz","TcpPldSz","UdpDLpckSz","UdpDLpldSz","UdpULpckSz","UdpULpldSz",
-	"UdpPckSz","UdpPldSz","TotDLpcks","TotDLpld","TotULpcks","TotULpld","TotPcks",
-	"TotPld","TcpDLInter","TcpULInter","TcpInter","UdpDLInter","UdpULInter","UdpInter",
-	"TotDLInter","TotULInter","TotInter","NumTcpDL","NumTcpUL","NumTcp","NumUdpDL","NumUdpUL","NumUdp","NumTotDL","NumTotUL","NumTot","IpPorts"}
+	--local featureNames = {"TcpDLpckSz","TcpDLpldSz","TcpULpckSz","TcpULpldSz",
+	--"TcpPckSz","TcpPldSz","UdpDLpckSz","UdpDLpldSz","UdpULpckSz","UdpULpldSz",
+	--"UdpPckSz","UdpPldSz","TotDLpcks","TotDLpld","TotULpcks","TotULpld","TotPcks",
+	--"TotPld","TcpDLInter","TcpULInter","TcpInter","UdpDLInter","UdpULInter","UdpInter",
+	--"TotDLInter","TotULInter","TotInter","NumTcpDL","NumTcpUL","NumTcp","NumUdpDL","NumUdpUL","NumUdp","NumTotDL","NumTotUL","NumTot","IpPorts"}
+	
+	local featureNames = {"TcpDLpckSz","TcpULpckSz","TcpPckSz",
+	"UdpDLpckSz","UdpULpckSz","UdpPckSz","TotDLpcks","TotULpcks","TotPcks",
+	"TcpDLpldSz","TcpULpldSz","TcpPldSz","UdpDLpldSz","UdpULpldSz","UdpPldSz",
+	"TotDLpld","TotULpld","TotPld","TcpDLInter","TcpULInter","TcpInter","UdpDLInter",
+	"UdpULInter","UdpInter","TotDLInter","TotULInter","TotInter","NumTcpDL","NumTcpUL",
+	"NumTcp","NumUdpDL","NumUdpUL","NumUdp","NumTotDL","NumTotUL","NumTot","IpPorts"}
 	
 	filecontent = filecontent.."featuresList= ("
 	featureTable = split(features,",")
