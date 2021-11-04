@@ -210,6 +210,7 @@ int array_concat_int(int **array1, int *array2, int *array3, int size2, int size
 	}
 }
 
+char *csvSeparator="\t";
 
 //calculate and print the features for an array of int basing on the check value (1=count, 2=sum,4=mean,8=median,16=mode,32=variance,64=standard_deviation,128=kurtosis)
 void array_calculate_print_features_int(FILE *outfile,int *data,int length,int check){
@@ -266,30 +267,30 @@ void array_calculate_print_features_int(FILE *outfile,int *data,int length,int c
 	}															
 																
 	if( (check & 1)>0 )													
-		fprintf(outfile,"\t%d",length);										
+		fprintf(outfile,"%s%d",csvSeparator,length);										
 																
 	if((check & 2)>0){													
-		fprintf(outfile,"\t%0.0lf",(double)sum);									
+		fprintf(outfile,"%s%0.0lf",csvSeparator,(double)sum);									
 																
 	}															
 	if((check & 4)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)mean);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)mean);									
 	}															
 	if((check & 8)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)median);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)median);									
 	}															
 	if((check & 16)>0){													
-		fprintf(outfile,"\t%0.0lf",(double)mode);									
+		fprintf(outfile,"%s%0.0lf",csvSeparator,(double)mode);									
 	}															
 	if( (check & 32)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)variance);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)variance);									
 	}															
 																
 	if((check & 64)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)stdev);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)stdev);									
 	}															
 	if((check & 128)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)kurtosis);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)kurtosis);									
 	}														
 	fflush(outfile);
 }
@@ -335,30 +336,30 @@ void array_calculate_print_features_dbl(FILE *outfile,double *data,int length,in
 
 	}													
 	if( (check & 1)>0 )													
-		fprintf(outfile,"\t%d",length);										
+		fprintf(outfile,"%s%d",csvSeparator,length);										
 																
 	if((check & 2)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)sum);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)sum);									
 																
 	}															
 	if((check & 4)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)mean);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)mean);									
 	}															
 	if((check & 8)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)median);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)median);									
 	}
 	if((check & 16)>0){													
-		fprintf(outfile,"\t--");									
+		fprintf(outfile,"%s--",csvSeparator);									
 	}																															
 	if( (check & 32)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)variance);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)variance);									
 	}															
 																
 	if((check & 64)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)stdev);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)stdev);									
 	}															
 	if((check & 128)>0){													
-		fprintf(outfile,"\t%0.4lf",(double)kurtosis);									
+		fprintf(outfile,"%s%0.4lf",csvSeparator,(double)kurtosis);									
 	}
 	fflush(outfile);
 }

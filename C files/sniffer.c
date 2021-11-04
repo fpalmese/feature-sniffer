@@ -2,7 +2,6 @@
 #include "queue.h"
 
 
-
 //-----------------------------------------------
 //-----------------------------------------------
 //-----------------------------------------------
@@ -251,7 +250,7 @@ void printWindowFeatures(Window *window){
 	}
 	char mac[17];
 	ether_ntoa_r(window->device,mac); //thread-safe ether_ntoa
-	fprintf(currentFile,"%.3f\t%s",(window->timestamp - relativeTime * startingTime),mac);
+	fprintf(currentFile,"%.3f%s%s",(window->timestamp - relativeTime * startingTime),csvSeparator,mac);
 	int size;
 	array(u_int) temp;
 	
@@ -273,11 +272,9 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->tcpDLsizes.data,sizeof(u_int)*window->tcpDLsizes.used);
 		memcpy(temp.data+window->tcpDLsizes.used,window->tcpULsizes.data,sizeof(u_int)*window->tcpULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//tcpSizes
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	array_free(temp);
@@ -288,12 +285,9 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->tcpPayloadDLsizes.data,sizeof(u_int)*window->tcpPayloadDLsizes.used);
 		memcpy(temp.data+window->tcpPayloadDLsizes.used,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
-
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//tcpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[5]);
 	array_free(temp);
@@ -317,11 +311,9 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->udpDLsizes.data,sizeof(u_int)*window->udpDLsizes.used);
 		memcpy(temp.data+window->udpDLsizes.used,window->udpULsizes.data,sizeof(u_int)*window->udpULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpSizes
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[10]);
 	array_free(temp);
@@ -332,12 +324,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->udpPayloadDLsizes.data,sizeof(u_int)*window->udpPayloadDLsizes.used);
 		memcpy(temp.data+window->udpPayloadDLsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
 
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[11]);
 	array_free(temp);
@@ -352,12 +342,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->tcpDLsizes.data,sizeof(u_int)*window->tcpDLsizes.used);
 		memcpy(temp.data+window->tcpDLsizes.used,window->udpDLsizes.data,sizeof(u_int)*window->udpDLsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
 
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[12]);
 	array_free(temp);
@@ -368,12 +356,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->tcpPayloadDLsizes.data,sizeof(u_int)*window->tcpPayloadDLsizes.used);
 		memcpy(temp.data+window->tcpPayloadDLsizes.used,window->udpPayloadDLsizes.data,sizeof(u_int)*window->udpPayloadDLsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
 
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[13]);
 	array_free(temp);
@@ -387,12 +373,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->tcpULsizes.data,sizeof(u_int)*window->tcpULsizes.used);
 		memcpy(temp.data+window->tcpULsizes.used,window->udpULsizes.data,sizeof(u_int)*window->udpULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
-	
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
+
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[14]);
 	array_free(temp);
@@ -405,12 +389,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
 		memcpy(temp.data+window->tcpPayloadULsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
 
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[15]);
 	array_free(temp);
@@ -426,12 +408,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data+window->tcpDLsizes.used+window->udpDLsizes.used,window->tcpULsizes.data,sizeof(u_int)*window->tcpULsizes.used);
 		memcpy(temp.data+window->tcpDLsizes.used+window->udpDLsizes.used+window->tcpULsizes.used,window->udpULsizes.data,sizeof(u_int)*window->udpULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
 
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[16]);
 	array_free(temp);
@@ -445,12 +425,10 @@ void printWindowFeatures(Window *window){
 		memcpy(temp.data+window->tcpPayloadDLsizes.used+window->udpPayloadDLsizes.used,window->tcpPayloadULsizes.data,sizeof(u_int)*window->tcpPayloadULsizes.used);
 		memcpy(temp.data+window->tcpPayloadDLsizes.used+window->udpPayloadDLsizes.used+window->tcpPayloadULsizes.used,window->udpPayloadULsizes.data,sizeof(u_int)*window->udpPayloadULsizes.used);
 		temp.used = size;
-		//array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[4]);
 	}
 	else
 		array_init(temp,1);
 
-	//macro_array_concat(temp,window->tcpDLsizes,window->tcpULsizes,u_int);
 	//udpPayload
 	array_calculate_print_features_int(currentFile,temp.data,temp.used,featureSelect[17]);
 	array_free(temp);
@@ -689,25 +667,25 @@ void printWindowFeatures(Window *window){
 	//last features (tcp ports, udp ports, remoteTcpPorts, remoteUdpPorts, remoteIpPorts)
 	
 	if((featureSelect[36] & 1)>0){													
-		fprintf(currentFile,"\t%d",window->tcpPorts.used);									
+		fprintf(currentFile,"%s%d",csvSeparator,window->tcpPorts.used);									
 	}															
 	if((featureSelect[36] & 2)>0){													
-		fprintf(currentFile,"\t%d",window->udpPorts.used);									
+		fprintf(currentFile,"%s%d",csvSeparator,window->udpPorts.used);									
 	}
 	if((featureSelect[36] & 4)>0){													
-		fprintf(currentFile,"\t%d",window->remoteTCPPorts.used);									
-	}																															
+		fprintf(currentFile,"%s%d",csvSeparator,window->remoteTCPPorts.used);									
+	}																											
 	if((featureSelect[36] & 8)>0){													
-		fprintf(currentFile,"\t%d",window->remoteUDPPorts.used);									
-	}														
-	if((featureSelect[36] & 16)>0){													
-		fprintf(currentFile,"\t%d",window->remoteIps.used);									
+		fprintf(currentFile,"%s%d",csvSeparator,window->remoteUDPPorts.used);
+	}
+	if((featureSelect[36] & 16)>0){
+		fprintf(currentFile,"%s%d",csvSeparator,window->remoteIps.used);
 	}
 
 	
 	//add label at the end of the row (last column) if needed
 	if(addLabel){
-		fprintf(currentFile,"\t%d",window->label);
+		fprintf(currentFile,"%s%d",csvSeparator,window->label);
 
 	}
 	fprintf(currentFile,"\n");
@@ -723,7 +701,7 @@ void print_pdf_vector(FILE *file, int *vector, int size, int check){
 	int index = 1;
 	for(int i=0;i<size;i++){
 		if (check & index)
-			fprintf(file,"\t%d",vector[i]);
+			fprintf(file,"%s%d",csvSeparator,vector[i]);
 		index*=2;
 	}
 	fflush(file);
@@ -901,16 +879,22 @@ void loadConfigSettings(){
 	config_lookup_int(&cfg,"splitByMac",&select);
 	splitByMac = (char)(select & 0xFF);
 
-	//init header string
-	if(printHeaders){
-		headerString = malloc(headerStringAllocated);
-		sprintf(headerString,"TS\tDev");
-	}
-
 	//load captureFilter
 	if(config_lookup_string(&cfg,"captureFilter",&str)==CONFIG_TRUE){
 		filterString = malloc(strlen(str)+1);
 		sprintf(filterString,"%s",str);
+	}
+	
+	//load csvSeparator
+	if(config_lookup_string(&cfg,"csvSeparator",&str)==CONFIG_TRUE){
+		csvSeparator = malloc(strlen(str)+1);
+		sprintf(csvSeparator,"%s",str);
+	}
+	
+	//init header string
+	if(printHeaders){
+		headerString = malloc(headerStringAllocated);
+		sprintf(headerString,"TS%sDev",csvSeparator);
 	}
 
 	//load features by list and setup the printHeader string (if printHeader is true);
@@ -936,10 +920,10 @@ void loadConfigSettings(){
 					//a simple sprintf(headerString,"%s\tNewHeader",headerString) would make it easier but not supported in openwrt
 			for(int j=0,selectIndex=1;j<8;j++){
 				if( (featureSelect[i] & selectIndex)>0){
-					tempSize = strlen(headerString)+strlen(str)+5;
+					tempSize = strlen(headerString)+strlen(str)+4+strlen(csvSeparator);
 					checkHeaderSize(tempSize);
 					tempString = malloc(tempSize);
-					sprintf(tempString,"%s\t%s%s",headerString,statNames[j],str);
+					sprintf(tempString,"%s%s%s%s",headerString,csvSeparator,statNames[j],str);
 					strncpy(headerString,tempString,tempSize);
 					free(tempString);
 				}
@@ -958,10 +942,10 @@ void loadConfigSettings(){
 		if(printHeaders){
 			for(int j=0,selectIndex=1;j<16;j++){
 				if( (featureSelect[i] & selectIndex)>0){
-					tempSize = strlen(headerString)+strlen(str)+13;
+					tempSize = strlen(headerString)+strlen(str)+12+strlen(csvSeparator);
 					checkHeaderSize(tempSize);
 					tempString = malloc(tempSize);
-					sprintf(tempString,"%s\t%s[%d-%d]",headerString,str,j*100,(j+1)*100);
+					sprintf(tempString,"%s%s%s[%d-%d]",headerString,csvSeparator,str,j*100,(j+1)*100);
 					strncpy(headerString,tempString,tempSize);
 					free(tempString);
 					//sprintf(headerString,"%s\tCnt%s",headerString,str);
@@ -983,20 +967,20 @@ void loadConfigSettings(){
 	if(printHeaders){
 		for(int j=0,selectIndex=1;j<5;j++){
 			if( (featureSelect[numFeatures-1] & selectIndex)>0){
-				tempSize = strlen(headerString)+16;
+				tempSize = strlen(headerString)+15+strlen(csvSeparator);
 				checkHeaderSize(tempSize);
 				tempString = malloc(tempSize);
-				sprintf(tempString,"%s\t%s",headerString,ipPortsNames[j]);
+				sprintf(tempString,"%s%s%s",headerString,csvSeparator,ipPortsNames[j]);
 				strncpy(headerString,tempString,tempSize);
 				free(tempString);
 			}
 			selectIndex*=2;
 		}
 		if(addLabel){
-			tempSize = strlen(headerString)+7;
+			tempSize = strlen(headerString)+6+strlen(csvSeparator);
 			checkHeaderSize(tempSize);
 			tempString = malloc(tempSize);
-			sprintf(tempString,"%s\tLabel",headerString);
+			sprintf(tempString,"%s%sLabel",headerString,csvSeparator);
 			strncpy(headerString,tempString,tempSize);
 			free(tempString);
 			//sprintf(headerString,"%s\tLabel",headerString);
