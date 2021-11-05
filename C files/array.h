@@ -210,7 +210,7 @@ int array_concat_int(int **array1, int *array2, int *array3, int size2, int size
 	}
 }
 
-char *csvSeparator="\t";
+char *csvSeparator;
 
 //calculate and print the features for an array of int basing on the check value (1=count, 2=sum,4=mean,8=median,16=mode,32=variance,64=standard_deviation,128=kurtosis)
 void array_calculate_print_features_int(FILE *outfile,int *data,int length,int check){

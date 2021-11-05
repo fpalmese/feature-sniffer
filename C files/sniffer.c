@@ -874,10 +874,36 @@ void loadConfigSettings(){
 	}
 	
 	//load csvSeparator
-	if(config_lookup_string(&cfg,"csvSeparator",&str)==CONFIG_TRUE){
-		csvSeparator = malloc(strlen(str)+1);
-		sprintf(csvSeparator,"%s",str);
+	if(config_lookup_int(&cfg,"csvSeparator",&select)==CONFIG_TRUE){
+		switch(select){
+			case 1:
+				csvSeparator="\t";
+				break;
+			case 2:
+				csvSeparator=",";
+				break;
+			case 3:
+				csvSeparator=" ";
+				break;
+			case 4:
+				csvSeparator="-";
+				break;
+			case 5:
+				csvSeparator=";";
+				break;
+			case 6:
+				csvSeparator="|";
+				break;
+			case 7:
+				csvSeparator="||";
+				break;
+			default:
+				csvSeparator = "\t";
+				break;
+		}
 	}
+	else
+		csvSeparator = "\t";
 	
 	//init header string
 	if(printHeaders){

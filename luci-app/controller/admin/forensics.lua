@@ -121,7 +121,7 @@ function handle_save_config()
 		--stop the config and remove pidfile
 		local pidfile = filesDirectory.."/features/configs/"..configName.."/pid"
 		luci.sys.call("kill -s SIGINT $(cat "..pidfile..")")
-		luci.sys.call("rm "..pidfile)
+		--luci.sys.call("rm "..pidfile)
 	end
 	
 	--get input parameters
@@ -139,6 +139,7 @@ function handle_save_config()
 	local checkParameters = true
 	local routerAddress = luci.http.formvalue("routerAddr")
 	local interface  = luci.http.formvalue("interface")
+	local csvSeparator = math.floor(tonumber(luci.http.formvalue("csvSeparator")))
 	local errorString = ""
 	------------------------------
 	--start check of parameters
@@ -155,6 +156,9 @@ function handle_save_config()
 	end
 	if(printHeaders~=nil)then
 		checkParameters = checkParameters and ((printHeaders ==1) or (printHeaders ==0))
+	end
+	if(csvSeparator~=nil)then
+		checkParameters = checkParameters and csvSeparator<=7 and csvSeparator >=1
 	end
 	
 	if(interface ~=nil)then
@@ -227,6 +231,9 @@ function handle_save_config()
 	end
 	if(splitByMac~=nil)then
 		filecontent = filecontent.."splitByMac="..splitByMac..";\n"
+	end
+	if(csvSeparator~=nil)then
+		filecontent = filecontent.."csvSeparator="..csvSeparator..";\n"
 	end
 	if(relativeTime~=nil)then
 		filecontent = filecontent.."relativeTime="..relativeTime..";\n"
@@ -568,15 +575,26 @@ function handle_check_output_readiness()
 	configName = configName:gsub(" ", "")
 	local filename = configName..".tar.gz"
 	local file = filesDirectory.."/features/configs/"..configName.."/"..filename
-	local size = tonumber(luci.sys.exec("ls -la "..file.." | awk '{print $5}'"));
+	--local size = luci.sys.exec("ls -la "..file.." | awk '{print $5}'")
+	local filestats = nixio.fs.stat(file)
+	if filestats == nil then
+		luci.http.status(400,"Bad Request")
+		luci.http.write_json("Requested file does not exist, try again...")
+		return 
+	end
+	
+	local size = filestats.size
+	luci.sys.call("echo '"..size.."' > /mnt/sda1/testDirectory/features/test")
+	
 	if size <= 1 then
 		luci.http.status(400,"Bad Request")
 		luci.http.write_json("Requested file does not exist, try again...")
 		return 
 	end
 	os.execute("sleep 0.1")
-	local size2 = tonumber(luci.sys.exec("ls -la "..file.." | awk '{print $5}'"));
-	if size2~=size then 
+	filestats = nixio.fs.stat(file)
+	--local size2 = luci.sys.exec("ls -la "..file.." | awk '{print $5}'")
+	if filestats.size~=size then 
 		luci.http.status(202,"Accepted")
 		luci.http.write_json("Output not ready yet")
 		return 

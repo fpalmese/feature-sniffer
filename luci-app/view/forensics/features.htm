@@ -72,10 +72,11 @@ end
 							</textarea>
 				</div>
 			</div>
-			<div id="capture-settings">
-				<h5 class="text-center" style="border-bottom: 2px solid grey;">Capture settings</h5></br>
-				<div class="capture-settings-subdiv">
-					<b>Capture type:</b><select id="capture-type">
+			<div id="config-settings">
+				<h5 class="text-center" style="border-bottom: 2px solid grey;">Configuration Settings</h5></br>
+				<div class="config-settings-subdiv">
+					<div class="bold" style="border-bottom: 1px solid grey;">Capture Settings</div></br>
+					Capture type: <select id="capture-type">
 									<option value=0>Live Capture</option>
 									<option value=1>Capture from PCAP</option>
 							</select></br></br>
@@ -95,12 +96,22 @@ end
 					</div>
 					Capture filter: <input id="config-capture-filter" type="text" value="" placeholder="Insert a valid filter string"></br></br>
 					Window duration (s): <input id="config-window-time" type="number" min=0.01 max=10 step=0.01 value=1 style="width:60px"></br></br>
+					<div class="bold" style="border-bottom: 1px solid grey;">Output Settings</div></br>
 					Add a label for each device: <input class="checkbox" id="config-add-label" type="checkbox"></br></br>
 					Create one output for each device: <input class="checkbox" id="config-split-output" type="checkbox"></br></br>	
 					Use relative times (from first window captured): <input class="checkbox" id="config-relative-time" type="checkbox"></br></br>	
 					Print feature names in output header: <input class="checkbox" id="config-print-headers" type="checkbox"></br></br>
+					CSV separator: <select id="csv-separator-select">
+									<option value=1>1. Tabulation: '\t'</option>
+									<option value=2>2. Comma: ','</option>
+									<option value=3>3. Space: ' '</option>
+									<option value=4>4. Hyphen: '-'</option>
+									<option value=5>5. Semicolon: ';'</option>
+									<option value=6>6. Pipe '|'</option>
+									<option value=7>7. Double Pipe '||'</option>
+							</select></br></br>
 				</div>
-				<div class="capture-settings-subdiv">
+				<div class="config-settings-subdiv">
 					<h5>Select Devices</h5>
 					<div>Capture only traffic of devices in the list. Leave blank to include all devices available in the network.</div></br>
 					<center>
@@ -512,6 +523,7 @@ end
 			resString = resString.slice(1,-1);
 			let configParams = resString.split("\\n");
 			let ip = "";
+			let mask = 0;
 			let allDevices = [];
 			let labels = [];
 			for(var i =0;i<configParams.length;i++){
@@ -624,6 +636,9 @@ end
 						case "splitByMac":
 							document.getElementById("config-split-output").checked = (value!= 0);
 							break;
+						case "csvSeparator":
+							document.getElementById("csv-separator-select").value = parseInt(value);
+							break;
 						case "relativeTime":
 							document.getElementById("config-relative-time").checked = (value!= 0);
 							break;
@@ -653,14 +668,17 @@ end
 							ip = value.slice(1,-1);
 							break;
 						case "mask":
-							ip = ip + "/"+parseInt(value);
-							document.getElementById("config-router-addr").value = ip;
+							mask = parseInt(value);
+							//ip = ip + "/"+parseInt(value);
+							//document.getElementById("config-router-addr").value = ip;
 							break;
 						default:
 							
 					}
 				}
 			}
+			if(ip!= "")
+				document.getElementById("config-router-addr").value = ip + "/"+mask;
 			if(allDevices.length >0)
 				addDevicesToTable(allDevices,labels);
 		}
@@ -976,6 +994,7 @@ end
 			
 			jsonData["printHeaders"] = (document.getElementById("config-print-headers").checked)? 1:0;
 			jsonData["splitByMac"] = (document.getElementById("config-split-output").checked)? 1:0;
+			jsonData["csvSeparator"] = document.getElementById("csv-separator-select").value;
 			jsonData["relativeTime"] = (document.getElementById("config-relative-time").checked)? 1:0;
 			jsonData["description"] = document.getElementById("config-description").value;
 			jsonData["features"] = getFeatureVector();
@@ -1296,13 +1315,13 @@ end
 	margin: 0 25px;
 }
 
-.capture-settings-subdiv{
+.config-settings-subdiv{
 	padding: 10px;
 	display:inline-block;
 	float:left;
 	width: 50%;
 	height: auto;
-	min-height:350px;
+	min-height:540px;
 	text-align:center;
 }
 .checkbox{
@@ -1324,7 +1343,7 @@ end
 	padding: 3px 0;
 }
 	
-#capture-settings{
+#config-settings{
     min-height: 390px;
 }
 .device-label{
@@ -1347,6 +1366,9 @@ end
 }
 i:hover{
 	opacity:0.6;
+}
+.bold{
+	font-weight: bold;
 }
 </style>
 
