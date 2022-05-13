@@ -1,3 +1,3 @@
 # $1 is the output directory, $2 is the config name
-(feature-sniffer -w $1/features/configs/$2/output/out -s $1/features/configs/$2/settings.cfg)&
+(feature-sniffer -w $1/features/configs/$2/output -s $1/features/configs/$2/settings.cfg)&
 echo  "$!" > $1/features/configs/$2/pid

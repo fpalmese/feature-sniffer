@@ -6,10 +6,12 @@ filesDirectory = tostring(luci.sys.exec("cat "..homeDirectory.."/init/baseDirect
 
 function index()
 	entry({"admin", "forensics"}, alias("/admin/forensics/forensics/features"), "Forensics", 30).dependent=true
+	entry({"admin", "forensics","forensics","capture"}, cbi("forensics/capture"), "Traffic Capture", 30).dependent=true
 	entry({"admin", "forensics", "forensics","features"}, template("forensics/features"), ("Feature Sniffer")).leaf = true
 	entry({"admin", "forensics", "forensics","save_config"},call("handle_save_config"),nil)
 	entry({"admin", "forensics", "forensics","open_existing_config"},call("handle_open_existing_config"),nil)
 	entry({"admin", "forensics", "forensics","start_existing_config"},call("handle_start_existing_config"),nil)
+	--entry({"admin", "forensics", "forensics","start_existing_config_python"},call("handle_start_existing_config_python"),nil)
 	entry({"admin", "forensics", "forensics","stop_existing_config"},call("handle_stop_existing_config"),nil)
 	entry({"admin", "forensics", "forensics","delete_existing_config"},call("handle_delete_existing_config"),nil)
 	entry({"admin", "forensics", "forensics","check_output_readiness"},call("handle_check_output_readiness"),nil)
@@ -133,6 +135,8 @@ function handle_save_config()
 	local splitByMac = tonumber(luci.http.formvalue("splitByMac"))
 	local relativeTime = tonumber(luci.http.formvalue("relativeTime"))
 	local printHeaders = tonumber(luci.http.formvalue("printHeaders"))
+	local rotateTime = tonumber(luci.http.formvalue("rotateTime"))
+	local rotateFiles = tonumber(luci.http.formvalue("rotateMaxFiles"))
 	local readFile = luci.http.formvalue("readFile")
 	local captureFilter  = luci.http.formvalue("captureFilter")
 	local description = luci.http.formvalue("description")
@@ -159,6 +163,19 @@ function handle_save_config()
 	end
 	if(csvSeparator~=nil)then
 		checkParameters = checkParameters and csvSeparator<=7 and csvSeparator >=1
+	end
+	
+	if(rotateTime~=nil)then
+		checkParameters = checkParameters and (type(rotateTime) == "number")
+		if rotateTime < 0 then
+			rotateTime = 0
+		end
+	end
+	if(rotateFiles~=nil)then
+		checkParameters = checkParameters and (type(rotateFiles) == "number")
+		if rotateFiles < 0 then
+			rotateFiles = 0
+		end
 	end
 	
 	if(interface ~=nil)then
@@ -247,6 +264,13 @@ function handle_save_config()
 	if(printHeaders~=nil)then
 		filecontent = filecontent.."printHeaders="..printHeaders..";\n"
 	end
+	if(rotateTime~=nil)then
+		filecontent = filecontent.."rotateTime="..rotateTime..";\n"
+		if(rotateFiles~=nil)then
+			filecontent = filecontent.."rotateMaxFiles="..rotateFiles..";\n"
+		end
+	end
+	
 	if(captureFilter~=nil)then
 		filecontent = filecontent.."captureFilter=\""..captureFilter.."\";\n"
 	end
@@ -312,6 +336,8 @@ function handle_save_config()
 		descriptionFile:write(description)
 		descriptionFile:close()
 	end
+	
+	luci.sys.call("rm "..filesDirectory.."/features/configs/"..configName.."/config.json")
 	
 	luci.http.prepare_content("application/json")	--prepare the Http response
 	luci.http.write_json("Config saved correctly.")
@@ -422,12 +448,56 @@ function handle_start_existing_config()
 		luci.sys.exec("mv "..filesDirectory.."/features/configs/"..configName.."/"..configName..".tar.gz "..filesDirectory.."/features/configs/"..configName.."/"..configName..tostring(count)..".tar.gz")
 	end
 	
-	
 	-- and start the config
 	luci.sys.call(homeDirectory.."/features/features-script "..filesDirectory.." "..configName)
 	luci.http.write_json("Feature capture started correctly")
 	
 end
+
+--start the config using python (be sure to generate the json first)
+function handle_start_existing_config_python()
+	local configName = luci.http.formvalue("configName")
+	--remove dots and /
+	configName = configName:gsub("%.", "")
+	configName = configName:gsub(" ", "")
+	configName = configName:gsub("\/", "")
+	if(configName=="")then
+		luci.http.status(400,"Bad Request")
+		luci.http.write_json("Invalid config name")
+		return
+	end
+
+	local status = checkConfigStatus(configName)
+	if(status==0)then
+		luci.http.status(400,"Bad Request")
+		luci.http.write_json("Capture is already running")
+		return
+	end
+	
+	--remove old output files
+	luci.sys.call("rm "..filesDirectory.."/features/configs/"..configName.."/output/*")
+	
+	--move the old output if exists (output.tar.gz to output1.tar.gz)
+	local res = tonumber(luci.sys.exec("test -f "..filesDirectory.."/features/configs/"..configName.."/"..configName..".tar.gz && echo 1"))
+	if(res==1)then
+		local outputList = tostring(luci.sys.exec("ls "..filesDirectory.."/features/configs/"..configName.."/*.tar.gz"))
+		local count =  select(2, string.gsub(outputList, "%\n", "")) --count \n so to know how many files in the folder
+		luci.sys.exec("mv "..filesDirectory.."/features/configs/"..configName.."/"..configName..".tar.gz "..filesDirectory.."/features/configs/"..configName.."/"..configName..tostring(count)..".tar.gz")
+	end
+	
+	--check if the conf.json exists
+	local checkExistsJson = tonumber(luci.sys.exec("test -f "..filesDirectory.."/features/configs/"..configName.."/config.json && echo 1"))
+	if(checkExistsJson~=1)then
+		luci.sys.call("config-translator -i "..filesDirectory.."/features/configs/"..configName.."/settings.cfg -o "..filesDirectory.."/features/configs/"..configName.."/config.json")
+	end
+	
+	
+	-- and start the config
+	luci.sys.call(homeDirectory.."/features/features-script-python "..filesDirectory.." "..configName)
+	luci.http.write_json("Feature capture started correctly")
+	
+end
+
 
 function handle_stop_existing_config()
 	local configName = luci.http.formvalue("configName")
@@ -448,6 +518,7 @@ function handle_stop_existing_config()
 		luci.http.write_json("Error stopping the capture. Try again")
 		return
 	end
+	os.execute("sleep 1")
 	luci.sys.call("rm "..filesDirectory.."/features/configs/"..configName.."/pid")
 	luci.sys.call("(tar -czf "..filesDirectory.."/features/configs/"..configName.."/"..configName..".tar.gz -C "..filesDirectory.."/features/configs/"..configName.."/output/ . && rm "..filesDirectory.."/features/configs/"..configName.."/output/*)&")
 	luci.http.write_json("Feature capture stopped correctly")

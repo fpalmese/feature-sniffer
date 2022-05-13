@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <libconfig.h>
 #include <math.h>
+#include <sys/dir.h>
 
 //#include "statistics.h"
 #include "array.h"
@@ -148,6 +149,7 @@ void loadMacFromFile();
 void loadConfigSettings();
 struct ether_addr macStringToEtheraddr(char* macString);
 Window* window_init();
+Window* window_reinit(Window* window,double time);
 void window_free(Window *window);
 int checkIPBroadcast(struct in_addr ip);
 int addDevice(struct ether_addr *dev);
@@ -162,6 +164,7 @@ void timesToInter(double **inter,double *array,int size);
 int cmpdbl (const void * a, const void * b);
 int cmpint (const void * a, const void * b);
 void print_pdf_vector(FILE *file, int *vector, int size, int check);
+void MakeFilename(char *buffer, char *orig_name, int cnt, int max_chars);
 
 //here are the settings for the feature capture //import from file
 char splitByMac = 0;
@@ -173,6 +176,9 @@ double windowTime = 1;
 int netmask=24;
 unsigned long routerIp = 3232235778; //192.168.1.2
 int *featureSelect;
+
+int rotate, rotate_count,rotate_max; //flags for the time rotation
+static double current_filetime;		/* The last time the dump file was rotated. */
 
 char* filterString;
 char* headerString;

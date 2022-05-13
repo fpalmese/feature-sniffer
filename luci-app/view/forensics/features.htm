@@ -110,6 +110,11 @@ end
 									<option value=6>6. Pipe '|'</option>
 									<option value=7>7. Double Pipe '||'</option>
 							</select></br></br>
+					Change Output Periodically (rotation): <input class="checkbox" id="config-rotate-flag" type="checkbox"></br></br>
+					<div id="config-rotate-settings" style="display:None"> 
+						Rotation Period (s): <input id="config-rotate-time" type="number" min=1 step=1 value=30 style="width:80px;"></br></br>
+						Max number of files: <input id="config-rotate-files" type="number" min=1 step=1 value=1 style="width:50px;"></br></br>
+					</div>
 				</div>
 				<div class="config-settings-subdiv">
 					<h5>Select Devices</h5>
@@ -230,6 +235,9 @@ end
 		});
 		document.getElementById("config-add-label").addEventListener("change",function(){
 			showDevicesLabels(this.checked);
+		});
+		document.getElementById("config-rotate-flag").addEventListener("change",function(){
+			showRotateSettings(this.checked);
 		});
 		
 		var colonDict=["count","sum","mean","median","mode","variance","stdev","kurtosis"];
@@ -639,6 +647,14 @@ end
 						case "csvSeparator":
 							document.getElementById("csv-separator-select").value = parseInt(value);
 							break;
+						case "rotateTime":
+							document.getElementById("config-rotate-time").value = parseInt(value);
+							document.getElementById("config-rotate-flag").checked = true;
+							showRotateSettings(true);
+							break;
+						case "rotateMaxFiles":
+							document.getElementById("config-rotate-files").value = parseInt(value);
+							break;
 						case "relativeTime":
 							document.getElementById("config-relative-time").checked = (value!= 0);
 							break;
@@ -914,6 +930,7 @@ end
 			document.querySelector("#selected-devices-list tbody").innerHTML ='<tr><th>#</th><th>MAC</th><th style="display:none">Label</th><th>Delete</th></tr>';
 			document.getElementById("input-add-device-error").style.display="none";
 			updateCaptureType();
+			showRotateSettings(false);
 		}
 		function resetConfigForm(e){
 			if(e) e.preventDefault();
@@ -1017,6 +1034,21 @@ end
 					return null;
 				}
 				jsonData["routerAddr"] = routerAddr;
+			}
+			
+			if(document.getElementById("config-rotate-flag").checked){
+				let rotateTime=document.getElementById("config-rotate-time").value;
+				if(!rotateTime || parseInt(rotateTime)<1){
+					displayError("Invalid rotation time. It must be integer > 1");
+					return null;
+				}
+				let rotateFiles=document.getElementById("config-rotate-files").value;
+				if(!rotateFiles || parseInt(rotateFiles)<1){
+					displayError("Invalid number of file. It must be integer > 1");
+					return null;
+				}
+				jsonData["rotateTime"] = parseInt(rotateTime);
+				jsonData["rotateMaxFiles"] = parseInt(rotateFiles);
 			}
 			
 			return jsonData;
@@ -1132,7 +1164,14 @@ end
 				document.getElementById("interface-select-div").style.display="none";
 			}
 		}
-	
+		
+		function showRotateSettings(checked){
+			if(checked)
+				document.getElementById("config-rotate-settings").style.display="block";
+			else
+				document.getElementById("config-rotate-settings").style.display="none";
+		}
+		
 		function selectAllFeaturesInRow(e){
 			e.preventDefault();
 			configChanged = true;
@@ -1321,7 +1360,7 @@ end
 	float:left;
 	width: 50%;
 	height: auto;
-	min-height:540px;
+	min-height:630px;
 	text-align:center;
 }
 .checkbox{

@@ -7,7 +7,8 @@
 //-----------------------------------------------
 
 int num_packets = -1;
-char *WFileName = "./captures/cap";
+char *WFileName = "./output";
+char *defaultOutputName = "capture";
 char *RFileName = NULL;
 char *SFileName = NULL;
 char *currentFilename;
@@ -15,12 +16,9 @@ char *interface = NULL;
 
 //int numWindows=0, numEnqueued=0,numDequeued=0;		DBG
 
-//flags for the G option (not used for now)
-int Gflag = 0, Gflag_count;
-static double Gflag_time;		/* The last time_t the dump file was rotated. */
 
-char captureRunning =1;
 
+char captureRunning = 1;
 
 pcap_t *handle;                   /* packet capture handle */
 
@@ -63,9 +61,10 @@ void got_packet(u_char *args,const struct pcap_pkthdr *header,const u_char *pack
 	if(ip->ip_p != IPPROTO_TCP && ip->ip_p != IPPROTO_UDP)//Invalid protocol
 		return;
 	
-	if(startingTime <0)
+	if(startingTime <0){
 		startingTime = ts;
-
+		current_filetime = startingTime;
+	}
 	//at first check the netmasks from the ip of the devices
 	src = checkNetmask(ip->ip_src);
 	dst = checkNetmask(ip->ip_dst) & !checkIPBroadcast(ip->ip_dst);
@@ -113,30 +112,36 @@ void got_packet(u_char *args,const struct pcap_pkthdr *header,const u_char *pack
 	//save the label to keep it constant in windows
 	int oldLabel = 0;
 	if(window_src != NULL && (ts - windowTime >= (window_src->timestamp))){	//if window src is old, enqueue to print and set a new window
+		/*
 		oldLabel = window_src->label;
 		enqueue(queuedWindows,window_src);
 		//numEnqueued++;	DBG
-		/*
-		allWindows.data[src] = window_init();	//set a new window and set the timestamp
-		window_src = allWindows.data[src]; */
 
 		window_src = window_init();
 		allWindows.data[src] = window_src;
 
+		//maintain old window params (dev,index,label) and set new time
 		memcpy(window_src->device, &(ethernet->ether_shost),6);
 		window_src->index = src;
 		window_src->label = oldLabel;
 		window_src->timestamp = (startingTime + ((int)( (ts-startingTime) /windowTime )) * windowTime);
+		*/
+
+		//reinit the window with empty values (maintain dev,index,label) and set the new time
+		allWindows.data[src] = window_reinit(window_src,(startingTime + ((int)( (ts-startingTime) /windowTime )) * windowTime));
+		enqueue(queuedWindows,window_src);
+		window_src = allWindows.data[src];
+
 	}	
 	if(window_dst != NULL && (ts - windowTime >= (window_dst->timestamp))){		//if window dst is old, enqueue to print and set a new window
+		/*		
 		oldLabel = window_dst->label;
 		enqueue(queuedWindows,window_dst);
+
 		//numEnqueued++;	DBG
+		//allWindows.data[dst] = window_init();	//set a new window and set the timestamp
+		//window_dst = allWindows.data[dst];
 		
-		/*
-		allWindows.data[dst] = window_init();	//set a new window and set the timestamp
-		window_dst = allWindows.data[dst];
-		*/
 
 		window_dst = window_init();
 		allWindows.data[dst] = window_dst;
@@ -146,6 +151,15 @@ void got_packet(u_char *args,const struct pcap_pkthdr *header,const u_char *pack
 		window_dst->index = dst;
 		window_dst->label = oldLabel;
 		window_dst->timestamp = (startingTime + ((int)( (ts-startingTime) /windowTime )) * windowTime);
+		*/
+
+		//reinit the window with empty values (maintain dev,index,label) and set the new time
+		allWindows.data[dst] = window_reinit(window_dst,(startingTime + ((int)( (ts-startingTime) /windowTime )) * windowTime));  
+		enqueue(queuedWindows,window_dst);
+		window_dst = allWindows.data[dst];
+
+
+
 	}
 	/*determine protocol */
 	switch(ip->ip_p){
@@ -690,12 +704,97 @@ void print_pdf_vector(FILE *file, int *vector, int size, int check){
 	fflush(file);
 }
 
+//this function scans the queue and prints(and removes) all the "old file" windows (lock the queue mutex first and unlock after)
+void checkOldWindowsWORKING(Queue *qWindows){
+	pthread_mutex_lock(&qWindows->mutex);
+	node *previous = NULL;	//previous node 	
+	node *current = qWindows->front; //current node
+	node *next = NULL;
+	Window *currentWindow;
+	//Window **windowsToPrint = malloc(sizeof(Window*) * qWindows->size);	//store the windows to print in a list, so you can unlock the queue for next enqueue
+	
+	while(current != NULL){
+		currentWindow = current->value;
+		//check if current window is old, if it is, print it and then change the queue
+		if(currentWindow->timestamp + windowTime - rotate <= current_filetime){
+			printWindowFeatures(currentWindow);
+			//if removing the front, update it with the next node
+			if(previous==NULL)
+				qWindows->front = current->next;
+			else //if there is a previous, update the previous->next with the current-> next
+				previous->next = current->next;
+				
+			//if removing the rear, update it with the previous node
+			if(current->next == NULL)
+				qWindows->rear = previous;
+			//you can finally free memory of current removed node
+			next = current->next;
+			free(current);
+			//current = current->next; // update the current node with the next in the list
+			qWindows->size--;
+		}
+		else{	//if you did not remove the current node, then you can update the previous with the current (otherwise the previous is the same)	
+			previous = current; // update the current node with the next in the list
+			next = current->next;
+		}
+		//current = previous->next;
+		current = next;
+	}
+	pthread_mutex_unlock(&qWindows->mutex);
+}
+//this function scans the queue and prints(and removes) all the "old file" windows (lock the queue mutex first and unlock after)
+void checkOldWindows(Queue *qWindows){
+	pthread_mutex_lock(&qWindows->mutex);
+	node *previous = NULL;	//previous node 	
+	node *current = qWindows->front; //current node
+	node *next = NULL;
+	Window *currentWindow;
+	array(Window*) windowsToPrint;
+	array_init(windowsToPrint,qWindows->size);
+	while(current != NULL){
+		currentWindow = current->value;
+		//check if current window is old, if it is, print it and then change the queue
+		if(currentWindow->timestamp + windowTime - rotate <= current_filetime){
+			//windowsToPrint[numWin++] = currentWindow;
+			array_push(windowsToPrint,currentWindow);
+			//if removing the front, update it with the next node
+			if(previous==NULL)
+				qWindows->front = current->next;
+			else //if there is a previous, update the previous->next with the current-> next
+				previous->next = current->next;
+				
+			//if removing the rear, update it with the previous node
+			if(current->next == NULL)
+				qWindows->rear = previous;
+			//you can finally free memory of current removed node
+			next = current->next;
+			free(current);
+			qWindows->size--;
+		}
+		else{	//if you did not remove the current node, then you can update the previous with the current (otherwise the previous is the same)	
+			previous = current; 
+			next = current->next;
+		}
+		current = next; // update the current node with the next in the list
+	}
+	pthread_mutex_unlock(&qWindows->mutex);
+	//unlock the queue then print the windows
+
+	for(int i=0;i<windowsToPrint.used;i++){
+		printWindowFeatures(windowsToPrint.data[i]);
+	}
+	array_free(windowsToPrint);
+
+}
+
+
+
 //this function is the life of the separated thread: wait for the queue and print the windows in there
 void printQueuedWindows(void* arguments){
-	Window *win;
+	Window *window;
 	while(1){
 		//printQueue(queuedWindows);
-		if(!dequeue(queuedWindows,&win)){
+		if(!dequeue(queuedWindows,&window)){
 			if(!captureRunning){
 				if(queuedWindows->size >0)
 					continue;
@@ -705,7 +804,49 @@ void printQueuedWindows(void* arguments){
 			continue;
 		}
 		//numDequeued++;		DBG
-		printWindowFeatures(win);
+
+
+		//if there is the rotation option, check that the window should go in the current file, otherwise change the file
+		if(rotate && window->timestamp + windowTime - rotate > current_filetime){
+			//enqueue all the window with an old file
+			Window *win;
+			for(int i=0;i<allWindows.used;i++){
+				win = allWindows.data[i];
+				if(win->timestamp + windowTime - rotate <= current_filetime && win->timestamp>0.0){
+					enqueue(queuedWindows,win);
+					allWindows.data[i] = window_reinit(win, 0.0); //reinit the window with empty timestamp (because you didnt get packets for the windows yet)
+				}
+			}
+			//print all the old windows present in the queue, in the current file
+			checkOldWindows(queuedWindows);
+			
+			//then you can update the file
+			current_filetime = startingTime + ((int)((window->timestamp + windowTime - startingTime)/rotate) * rotate);
+			rotate_count = (rotate_count+1)%rotate_max;
+			
+			//update all files if splitting by mac
+			if(splitByMac){
+				//char *newFilename = (char *)malloc(PATH_MAX + 1);
+				for(int i=0;i<allWindows.used;i++){
+					sprintf(currentFilename,"%s/%s/%s%d.csv",WFileName,ether_ntoa(allWindows.data[i]->device),defaultOutputName,rotate_count);
+					fclose(filePerMac[i]); //close all old files
+					filePerMac[i] = fopen(currentFilename,"w"); //and open the new ones
+					if(printHeaders)
+						printFeatureHeaders(filePerMac[i]);
+				}
+			}
+			// otherwise update the single file used
+			else{
+				//currentFilename = (char *)malloc(PATH_MAX + 1);
+				sprintf(currentFilename,"%s/%s%d.csv",WFileName,defaultOutputName,rotate_count);
+				fclose(currentFile); //close old file
+				currentFile = fopen(currentFilename,"w"); // and open the new one
+				if(printHeaders)
+					printFeatureHeaders(currentFile);
+
+			}
+		}	
+		printWindowFeatures(window);
 	}
 }
 
@@ -771,6 +912,18 @@ Window* window_init(){
 	return window;
 }
 
+//init the window for the next tim
+Window* window_reinit(Window* window,double time){
+	Window *new_window = window_init(); //init a new window
+	new_window->index = window->index; //copy index
+	new_window->label = window->label; //copy label
+	new_window->timestamp = time; //set new time
+	memcpy(new_window->device, window->device,6); //copy mac
+	return new_window; //return the new window
+
+}
+
+
 //add a new device and return its index. (please call only if device does not exist already)
 int addDevice(struct ether_addr *dev){
 	//printf("adding new device: %s\n",ether_ntoa(dev));	//DBG
@@ -780,15 +933,21 @@ int addDevice(struct ether_addr *dev){
 	array_push(allWindows,win);
 
 	FILE * file = NULL;
-	char *newFilename;
 	/* Append the new file in the array for the mac (print headers if needed)*/
+
 	if(splitByMac){
-		newFilename = malloc(strlen(WFileName)+18);
-		sprintf(newFilename,"%s%s",WFileName,ether_ntoa(dev));
-		file = fopen(newFilename,"w");
+		char *mkdirpath = malloc(PATH_MAX + 1);
+		sprintf(mkdirpath,"%s/%s",WFileName,ether_ntoa(dev));
+		mkdir(mkdirpath);
+		free(mkdirpath);
+		
+		if(rotate)
+			sprintf(currentFilename,"%s/%s/%s%d.csv",WFileName,ether_ntoa(dev),defaultOutputName,rotate_count);
+		else
+			sprintf(currentFilename,"%s/%s/%s.csv",WFileName,ether_ntoa(dev),defaultOutputName);
+		file = fopen(currentFilename,"w");
 		if(printHeaders)
 			printFeatureHeaders(file);
-	
 		if(usedFiles == lenFiles){
 			lenFiles *=2;
 			filePerMac = realloc(filePerMac,lenFiles * sizeof(FILE*));
@@ -821,7 +980,7 @@ void loadConfigSettings(){
 	int select;
 	config_init(&cfg);
 	//read config file
-	
+	fflush(stdout);
 	if(! config_read_file(&cfg, SFileName)){
 		fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg),
 		    config_error_line(&cfg), config_error_text(&cfg));
@@ -850,6 +1009,15 @@ void loadConfigSettings(){
 	//load printHeaders
 	config_lookup_int(&cfg,"printHeaders",&select);
 	printHeaders = (char)(select & 0xFF);
+
+	//load rotation if set
+	config_lookup_int(&cfg,"rotateTime",&rotate);
+	if(rotate > 0){
+		config_lookup_int(&cfg,"rotateMaxFiles",&rotate_max);
+		rotate_count=0;
+	}
+	else
+		rotate=0;
 
 	//load ReadFilename
 	if(config_lookup_string(&cfg,"readFile",&str)==CONFIG_TRUE){
@@ -910,7 +1078,6 @@ void loadConfigSettings(){
 		headerString = malloc(headerStringAllocated);
 		sprintf(headerString,"TS%sDev",csvSeparator);
 	}
-
 	//load features by list and setup the printHeader string (if printHeader is true);
 	setting = config_lookup(&cfg, "featuresList");
 	int numFeatures = config_setting_length(setting);
@@ -1018,6 +1185,7 @@ void loadConfigSettings(){
 		lenFiles = (numDevices>0)? numDevices : 10;
 		filePerMac = (FILE*)malloc(sizeof(FILE*)*lenFiles);
 	}
+	
 	if(numDevices>0){
 		macFromFile = 1;
 		for(int i=0;i<numDevices;i++){
@@ -1040,8 +1208,6 @@ void loadConfigSettings(){
 				allWindows.data[i]->label = (allWindows.data[i]->index)+1;
 		}
 	}
-
-		
 	config_destroy(&cfg);
 }
 
@@ -1086,25 +1252,31 @@ int main(int argc, char **argv){
 	bpf_u_int32 mask;                 /* subnet mask */
 	bpf_u_int32 net;                  /* ip */
 	struct bpf_program fp;            /*  compiled filter program (expression) */
-
-	
 	/* parse command line arguments */
 	if (parse_arguments(argc,argv) !=0)
 		return 1;
+	
+	currentFilename = (char *)malloc(PATH_MAX + 1);
+
 	/* parse settings */
 	if(SFileName != NULL)
 		loadConfigSettings();
 
-	
 	if(!splitByMac){	//init the output file
-		currentFilename = (char *)malloc(PATH_MAX + 1);
-		strcpy(currentFilename,WFileName);
+		//strcpy(currentFilename,WFileName);
+		if(rotate)
+			sprintf(currentFilename,"%s/%s%d.csv",WFileName,defaultOutputName,rotate_count);
+		else
+			sprintf(currentFilename,"%s/%s.csv",WFileName,defaultOutputName);
+		
 		currentFile = fopen(currentFilename,"w");
+		
 		if(printHeaders){
 			printFeatureHeaders(currentFile);
 		}
 		//delete the headerString
-		free(headerString);
+		if(!rotate)	
+			free(headerString);
 	}
 	printf("windowTime: %f relativeTime: %d addLabel: %d, printHeaders: %d, splitByMac: %d, macFromFile: %d, readFile: %d, filterString = %s\n",windowTime,relativeTime, addLabel, printHeaders, splitByMac, macFromFile, RFileName!=NULL, filterString);	//DBG
 
@@ -1166,8 +1338,8 @@ int main(int argc, char **argv){
 	/* apply the compiled filter */
 	
 	if(pcap_setfilter(handle,&fp) == -1){
-	fprintf(stderr,"Couldn't install filter %s: %s\n",filterString,pcap_geterr(handle));
-	exit(EXIT_FAILURE);
+		fprintf(stderr,"Couldn't install filter %s: %s\n",filterString,pcap_geterr(handle));
+		exit(EXIT_FAILURE);
 	}
 	
 
@@ -1223,14 +1395,14 @@ int checkIPBroadcast(struct in_addr ip){
 
 //export last windows not yet exported (when program has been stopped with SIGINT)
 void finalExport(){
-	Window *win;
+	Window *finwin;
 	for(int i=0;i<allWindows.used;i++){
-		win = allWindows.data[i];
-		//printf("enqueuing last window\n");
+		finwin = allWindows.data[i];
 		//numEnqueued++;		DBG
-		enqueue(queuedWindows,win);
+		if(finwin->timestamp > 0.0)
+			enqueue(queuedWindows,finwin);
 	}
-
+	array_free(allWindows); //clear the array of all windows
 }
 
 //function to parse command line arguments
@@ -1254,17 +1426,6 @@ int parse_arguments(int argc, char **argv){
 			case 'r':
 				RFileName = optarg;
 				break;
-			case 'G':
-				Gflag = atoi(optarg);
-				if (Gflag < 0)
-					fprintf(stderr,"invalid number of seconds %s", optarg);
-
-		                /* We will create one file initially. */
-		                Gflag_count = 0;
-
-				Gflag_time = 0;
-				break;
-			
 			case '?':
 				if (isprint (optopt))
 					fprintf (stderr, "Unknown option `-%c' or it requires an argument.\n", optopt);
@@ -1332,5 +1493,10 @@ void closeFiles(){
 	else
 		fclose(currentFile);
 }
+
+
+
+
+
 
 
