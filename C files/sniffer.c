@@ -7,11 +7,11 @@
 //-----------------------------------------------
 
 int num_packets = -1;
-char *WFileName = "./output";
-char *defaultOutputName = "capture";
-char *RFileName = NULL;
-char *SFileName = NULL;
-char *currentFilename;
+char *WFileName = "./output"; //output directory
+char *defaultOutputName = "capture"; //output filename without extension
+char *RFileName = NULL; //read file (can pass in settings or from pcap)
+char *SFileName = NULL; //settings file
+char *currentFilename; //current output
 char *interface = NULL;
 
 //int numWindows=0, numEnqueued=0,numDequeued=0;		DBG
@@ -1408,7 +1408,7 @@ void finalExport(){
 //function to parse command line arguments
 int parse_arguments(int argc, char **argv){
 	int c;
-	while ((c = getopt (argc, argv, "c:i:w:G:s:r:")) != -1){
+	while ((c = getopt (argc, argv, "c:i:w:G:s:r:n:")) != -1){
 		switch (c){
 			//option for max num. of packets to capture
 			case 'c':
@@ -1417,10 +1417,14 @@ int parse_arguments(int argc, char **argv){
 			case 'i':
 				interface = optarg;
 				break;
-			case 'w':
+			case 'w': //output filename
 				WFileName = optarg;
+				mkdir(WFileName);
 				break;
-			case 's':
+			case 'n':
+				defaultOutputName = optarg;
+				break;
+			case 's': //settings filename
 				SFileName = optarg;
 				break;
 			case 'r':
