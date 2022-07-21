@@ -140,7 +140,6 @@ int parse_arguments(int argc, char **argv);
 void got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 void print_bits(u_short x);
 double time_to_double(long long sec,long long usec);
-void MakeFilename(char *buffer, char *orig_name, int cnt, int max_chars);
 void printFeatureHeader(FILE * featureFile);
 void printWindowFeatures(Window *window);
 int getWindowIndex(struct ether_addr *mac);
@@ -164,7 +163,7 @@ void timesToInter(double **inter,double *array,int size);
 int cmpdbl (const void * a, const void * b);
 int cmpint (const void * a, const void * b);
 void print_pdf_vector(FILE *file, int *vector, int size, int check);
-void MakeFilename(char *buffer, char *orig_name, int cnt, int max_chars);
+void recursive_mkdir(char *dir);
 
 //here are the settings for the feature capture //import from file
 char splitByMac = 0;

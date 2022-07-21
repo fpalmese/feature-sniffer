@@ -1410,27 +1410,27 @@ int parse_arguments(int argc, char **argv){
 	int c;
 	while ((c = getopt (argc, argv, "c:i:w:G:s:r:n:")) != -1){
 		switch (c){
-			//option for max num. of packets to capture
-			case 'c':
+			
+			case 'c': //option for max num. of packets to capture
 				num_packets = atoi(optarg);
 				break;
-			case 'i':
+			case 'i': //interface
 				interface = optarg;
 				break;
-			case 'w': //output filename
+			case 'w': //output directory PASS ONLY THE DIRECTORY, NOT A FULL NAME WITH EXTENSION (i.e. "/home/output"
 				WFileName = optarg;
-				mkdir(WFileName);
+				recursive_mkdir(WFileName);
 				break;
-			case 'n':
+			case 'n': //output filename DO NOT PASS THE EXTENSION (i.e. "output")
 				defaultOutputName = optarg;
 				break;
 			case 's': //settings filename
 				SFileName = optarg;
 				break;
-			case 'r':
+			case 'r': //read from pcap (overwritten if you have it in settings
 				RFileName = optarg;
 				break;
-			case '?':
+			case '?': 
 				if (isprint (optopt))
 					fprintf (stderr, "Unknown option `-%c' or it requires an argument.\n", optopt);
 				else
@@ -1487,6 +1487,7 @@ void window_free(Window *window){
 	//printf("end free window\n");
 }
 
+//close all open files
 void closeFiles(){
 	if(splitByMac){
 		for(int i=0;i<usedFiles;i++){
@@ -1498,8 +1499,23 @@ void closeFiles(){
 		fclose(currentFile);
 }
 
+void recursive_mkdir(char *dir) {
+    char tmp[256];
+    char *p = NULL;
+    size_t len;
 
-
+    snprintf(tmp, sizeof(tmp),"%s",dir);
+    len = strlen(tmp);
+    if (tmp[len - 1] == '/')
+        tmp[len - 1] = 0;
+    for (p = tmp + 1; *p; p++)
+        if (*p == '/') {
+            *p = 0;
+            mkdir(tmp);
+            *p = '/';
+        }
+    mkdir(tmp);
+}
 
 
 
