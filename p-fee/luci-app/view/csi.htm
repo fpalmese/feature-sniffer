@@ -1,0 +1,992 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<%+header%>
+
+<% filesDirectory="/mnt/sda1/testDirectory"
+--lua functions defined here
+function split(inputstr, sep)
+        if sep == nil then
+                sep = "%s"
+        end
+        local t={}
+        for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+                table.insert(t, str)
+        end
+        return t
+end
+
+
+%>
+
+<h2><%:CSI%></h2>
+<div>This section allows to extract features from network traffic. Here you can control your Configurations or create new ones.</div>
+
+
+</br></br>
+<div id="main-view">
+	<div id="create-new-config" class="border clickable">
+		<center><h5>Create a new Feature Capture Configuration</h5></center>
+	</div>
+	</br></br>
+
+	<div>
+		<div style="display:inline-block;position:relative;left:1%;max-width:15px;">
+			<div id="refresh-existing-configs" style="border:1px solid #4a4; padding:2px 11px;border-radius:14px" class="clickable">
+			<i class="bi bi-arrow-repeat"></i>
+			</div>
+		</div>
+		<div style="display:inline-block;position:relative;left:40%">
+			<h5>Existing configurations</h5>
+		</div>
+		<div style="display:inline-block; position:relative;float:right">
+			Base directory: <input type="text" id="base-directory-input" style="max-width:150px;max-height:25px;">
+			<button id="change-dir-btn" class="btn" style="margin-left:4px;line-height:85%;max-width:75px">Change</button>
+		</div>
+	</div>
+	<center> 
+	<div id="existing-configs-div" class="border" style="min-height:30px">
+	
+	</div>
+	</center>
+</div>
+
+
+
+<div id="new-config-tab-container" class="border" style="display:None">
+	<div id="new-config-tab" style="width:90%;margin-left: auto; margin-right: auto;">
+		<form>
+			<div id="config-settings">
+					<h5 class="text-center" style="border-bottom: 2px solid grey;">Configuration Settings</h5>
+					
+						<div></br>
+							<div class="config-settings-subdiv">
+						
+								Configuration Name: <input id="config-name" type="text" value="" placeholder="Insert a valid name"></br></br>
+	
+								Description: <textarea style="display:inline-block;" id="config-description"> 
+								</textarea></br></br>
+							
+								Channel: <input id="config-channel" type="number" min=1 max=13 step=1 value=7 style="width:60px"></br></br>
+							
+								<div style="display:inline-block;float:right;">
+									Load an existing configuration:
+									<a id="predefined-config-loading"></a><select id="select-predefined-config">
+									<option value="-"></option>
+								</select>
+								</div>
+							</div>
+
+						</div>
+					
+						<div class="config-settings-subdiv" >
+							<h5>Select Devices</h5>
+							<div>Capture only traffic of devices in the list. Leave blank to include all devices available in the network.</div></br>
+							<center>
+							<div style="border-bottom: 2px solid grey;width:90%;"><b>Device List</b></div>
+							<table id="selected-devices-list" class="table ftr-table" style="width:80%;">
+								<tr>
+									<th>#</th>
+									<th>MAC</th>
+									<th style="display:none">Label</th>
+									<th>Delete</th>
+								</tr>				
+							</table>
+							</center>
+							</br>
+							Add device: <input id="input-add-device" style="width:150px" type="text" placeholder="Insert device MAC">
+							<button id="btn-add-device" style="margin-left:5px; width:40px" class="btn cbi-button-save">+</button></br></br>
+							<div id="input-add-device-error">Invalid MAC address </div>
+						</div>
+				</div>		
+				</br></br>
+		
+			<div class="error" id="config-error"> Insert a valid name...</div>
+			
+			</br></br></br>
+			<div id="new-config-buttons">
+				<button id="back-btn" class="btn cbi-button cbi-button-action" style="float:left">Back</button>
+				<button id="save-btn" class="btn cbi-button cbi-button-save" style="margin-left:4px;float:right">Save</button>
+				<input id="reset-btn" class="btn cbi-button cbi-button-reset" type="reset" style="float:right" value="Reset">
+			</div>
+		</form>
+	</div>
+</div>
+
+
+
+<script type="text/javascript">
+
+(function() {
+	String.prototype.replaceAll = function(search, replacement) {
+	    var target = this;
+	    return target.replace(new RegExp(search, 'g'), replacement);
+	};
+	
+	window.onload = function(){
+		var configChanged = false;	//true if the current config has changed
+		var newConfig = false;		//true if you are creating a new config
+		var oldName = "";			//save the old name of an existing config
+		var newConfigButton = document.getElementById("create-new-config");
+		var mainView = document.getElementById("main-view");
+		var configContainer = document.getElementById("new-config-tab-container");
+		var baseDirectory = "";
+		newConfigButton.addEventListener("click",function(){
+			newConfig = true;
+			configChanged = true;
+			openConfigTab();
+		});
+		/*document.getElementById("config-add-label").addEventListener("change",function(){
+			showDevicesLabels(this.checked);
+		});	*/
+		
+		document.getElementById("back-btn").addEventListener("click",closeConfigTab);
+		document.getElementById("save-btn").addEventListener("click",saveConfig);
+		document.getElementById("reset-btn").addEventListener("click",resetConfigForm);
+		document.querySelector("form").addEventListener("change",function(){configChanged=true;});
+		
+		function updateExistingConfigsTab(configString){
+			document.getElementById("existing-configs-div").innerHTML="";document.getElementById("existing-configs-div").innerHTML="";
+			if(configString =="") return;
+			let allConfigs = (configString.replaceAll("'","\"")).split("\\n");
+			
+			for(var i =0;i<allConfigs.length;i++){
+				jsonConf = JSON.parse(allConfigs[i]);
+				div = document.createElement("div");
+				div.classList.add("existing-config");
+				div.setAttribute("value",jsonConf["name"])
+				
+				let name = document.createElement("div");
+				name.classList.add("existing-config-field");
+				name.innerHTML = "Name: "+jsonConf["name"];
+				div.appendChild(name);
+					
+				let date = document.createElement("div");
+				date.classList.add("existing-config-field");
+				date.innerHTML = "Date: "+jsonConf["date"];
+				div.appendChild(date);
+				
+				let status = document.createElement("div");
+				status.classList.add("existing-config-field");
+				status.innerHTML = "Status: "+jsonConf["status"];
+				div.appendChild(status);
+					
+				btnDelete = createExistingConfigButton("Delete");
+				btnStop = createExistingConfigButton("Stop");
+				btnStart = createExistingConfigButton("Start");
+				if(jsonConf["status"] =="Running"){
+					disableButton(btnStart);
+					disableButton(btnDelete);
+				}
+				else
+					disableButton(btnStop);
+					
+				div.appendChild(btnDelete);
+				div.appendChild(createExistingConfigButton("Output"));
+				div.appendChild(btnStop);
+				div.appendChild(btnStart);
+				div.appendChild(createExistingConfigButton("Open"));
+				//append new row
+				document.getElementById("existing-configs-div").appendChild(div);
+			}
+		}
+	
+		function loadExistingConfigs(getBase=true){
+			document.querySelector("#refresh-existing-configs").classList.remove("clickable");
+			document.querySelector("#refresh-existing-configs i").classList.add("spinning");
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_get_features_configs")%>'
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						responseString = responseString.slice(1,-1);
+						updateExistingConfigsTab(responseString);
+						document.querySelector("#refresh-existing-configs i").classList.remove("spinning");
+						document.querySelector("#refresh-existing-configs").classList.add("clickable");
+					}
+				}
+			});
+			if(getBase){
+				url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_get_base_directory")%>'
+				ajaxRequest("GET",url,function(req){
+					if(req.readyState == 4){
+						let responseString = req.responseText;
+						if(req.status == 200){
+							responseString = responseString.slice(1,-1);
+							responseString = responseString.replace(/\\/g, "");
+							baseDirectory = responseString;
+							document.getElementById("base-directory-input").value = baseDirectory;
+							
+						}
+					}
+				});
+			}
+		}
+		loadExistingConfigs(true);
+		
+		
+		document.getElementById("refresh-existing-configs").addEventListener("click",function(){
+			loadExistingConfigs(true);
+		});
+		
+		//append the listener for the changeDirectory function
+		document.getElementById("change-dir-btn").addEventListener("click",changeBaseDirectory);
+		
+		function changeBaseDirectory(){
+			if(document.getElementById("base-directory-input").value != baseDirectory){
+				data = {"baseDirectory":(document.getElementById("base-directory-input").value).trim()};
+				let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_change_base_directory")%>'
+				ajaxRequest("POST",url,function(req){
+					if(req.readyState == 4){
+						let responseString = req.responseText;
+						if(req.status == 200){
+							responseString = responseString.slice(1,-1);
+							baseDirectory = document.getElementById("base-directory-input").value;
+							updateExistingConfigsTab(responseString);
+						}
+						else{//if error set back correct dir
+							document.getElementById("base-directory-input").value = baseDirectory;
+						}
+					}
+				},prepareHttpData(data));
+			}
+		}
+		
+		function createExistingConfigButton(name){
+			let button = document.createElement("button");
+			button.classList.add("btn");
+			button.classList.add("button-existing-config");
+			let fun = null;
+			if(name=="Delete"){
+				button.classList.add("cbi-button-reset");
+				button.innerHTML = '<i class="bi bi-trash"></i>';
+				fun = deleteExistingConfig;
+			}
+			else if(name=="Output"){
+				button.classList.add("cbi-button-action");
+				button.innerHTML = '<i class="bi bi-arrow-down-circle"></i>';
+				fun = downloadOutputExistingConfig;
+			}
+			else if(name=="Stop"){
+				button.classList.add("cbi-button-reset");
+				button.innerHTML = '<i class="bi bi-stop-circle"></i>';
+				fun = stopExistingConfig;
+			}
+			else if(name=="Start"){
+				button.classList.add("cbi-button-save");
+				button.innerHTML = '<i class="bi bi-play-circle"></i>';
+				fun = startExistingConfig;
+			}
+			else if(name=="Open"){
+				button.classList.add("cbi-button-action");
+				button.innerHTML = '<i class="bi bi-pencil-square"></i>';
+				fun = openExistingConfig;
+			}
+			button.addEventListener("click",fun);
+			return button;
+		}
+		
+		/*function showDevicesLabels(checked){
+			let tableRows = document.querySelectorAll("#selected-devices-list tr");
+			for(var i=0;i<tableRows.length;i++){
+				tableRows[i].children[2].style.display = (checked) ? "block":"none";
+			}
+			
+		}*/
+		
+		function deleteExistingConfig(e){
+			let configName = this.parentNode.getAttribute("value");
+			if(!confirm("Are you sure you want to delete '"+configName+"'?"))
+				return;
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let data = {"configName":configName};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_delete_config")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						button.parentNode.parentNode.removeChild(button.parentNode);	
+					}
+					else
+						console.log("error on delete: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function openExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_open_existing_config")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						document.getElementById("config-name").value = configName;
+						oldName = configName;
+						getConfigDescription({"configName":configName});
+						parseExistingConfigParams(responseString);
+						//open the tab for the new config
+						newConfig = false;
+						openConfigTab();
+					}
+					else
+						console.log("error on open: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function downloadOutputExistingConfig(e){
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			var button = this;		//'this' represents the button
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_transfer_csv")%>';
+			disableButton(button);
+			button.classList.add("spinning");
+			
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){	
+					let responseString = req.responseText;
+					if(req.status == 200){
+						window.location.href = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_download_config_output")%>'+"?configName="+configName;
+						button.classList.remove("spinning");
+						enableButton(button);
+					}
+					else if(req.status ==0 || req.status ==202){
+						checkOutputReadiness(button);
+					}
+					else{
+						console.log("error on downloading output: ",responseString);
+						button.classList.remove("spinning");
+						enableButton(button);
+					}
+				}
+			},prepareHttpData(data), timeout= 10);
+			
+		}
+		
+		function checkOutputReadiness(button){
+			let url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_check_output_readiness")%>';
+			let configName = button.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						window.location.href = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_download_config_output")%>'+"?configName="+configName;
+						enableButton(button);
+						button.classList.remove("spinning");
+					}
+					else if(req.status == 202){
+						setTimeout(function () {	//wait 1.5 seconds and check again
+							checkOutputReadiness(button);
+						}, 1500)
+					}
+					else{
+						//console.log("error on downloading output: ",responseString);
+						//console.log("enabling button: ",button);
+						enableButton(button);
+						button.classList.remove("spinning");
+					}
+				}
+			},prepareHttpData(data),timeout=10);
+		}
+		
+		function parseExistingConfigParams(resString){
+			//console.log("res: ",resString);
+			resString = resString.slice(1,-1);
+			let configParams = resString.split("\\n");
+			let allDevices = [];
+			//let labels = [];
+			for(var i =0;i<configParams.length;i++){
+				configParams[i] = configParams[i].replaceAll("==","_eqeq_");
+				configParams[i] = configParams[i].replaceAll(">=","_geq_");
+				configParams[i] = configParams[i].replaceAll("<=","_leq_");
+				configParams[i] = configParams[i].replaceAll("!=","_neq_");
+				
+				//set devices in the list
+				if(configParams[i].includes("devicesMacs")){
+					value = configParams[i];
+					value = value.replaceAll(" ","");
+					value = value.replace("devicesMacs=","");
+					value = value.replaceAll("'",'"')
+					value = value.slice(1,-1);	//remove the parentesis () for the array
+					allDevices = value.split(",");
+				}
+				//set labels in the list
+				/*else if(configParams[i].includes("labels")){
+					value = configParams[i];
+					value = value.replaceAll(" ","");
+					value = value.replace("labels=","");
+					value = value.slice(1,-1);	//remove the parentesis ()
+					labels = value.split(",");
+				}*/
+				//Set all the parameters
+				else{
+					[key,value] = configParams[i].split("=");
+					key = key.trim();
+					value = value.trim();
+					switch(key){
+						/*case "printHeaders":
+							document.getElementById("config-print-headers").checked = (value!= 0);
+							break;
+						case "addLabel":
+							document.getElementById("config-add-label").checked = (value!= 0);
+							showDevicesLabels(value!= 0);
+							break;
+						case "splitByMac":
+							document.getElementById("config-split-output").checked = (value!= 0);
+							break;
+						case "csvSeparator":
+							document.getElementById("csv-separator-select").value = parseInt(value);
+							break;*/
+						case "channel": 
+							document.getElementById("config-channel").value = parseInt(value);
+							break;
+						default:
+							
+					}
+				}
+			}
+			
+			if(allDevices.length >0)
+				addDevicesToTable(allDevices);
+		}
+		
+		function addDevicesToTable(devices){
+			//add devices into the table (will be done at the end!
+			for(var i=0;i<devices.length;i++){
+				if(devices[i]!=""){
+					devices[i] = devices[i].slice(1,-1);
+					addDeviceToList(devices[i].toUpperCase());
+				}
+			}
+		
+		}
+		
+		function startExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics", "csi_start")%>'
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						button.parentNode.querySelectorAll(".existing-config-field")[2].innerHTML = "Status: Running";
+						//disable start button
+						disableButton(button);
+						//enable stop button
+						enableButton(button.parentNode.querySelectorAll("button")[2]);
+						//disable delete button
+						disableButton(button.parentNode.querySelectorAll("button")[0]);
+					}
+					else
+						console.log("error on start: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function stopExistingConfig(e){
+			var button = this;
+			//let configName = (this.parentNode.querySelector(".existing-config-field").innerHTML).replace("Name: ","");
+			let configName = this.parentNode.getAttribute("value");
+			let data = {"configName":configName};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics", "csi_stop")%>'
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						button.parentNode.querySelectorAll(".existing-config-field")[2].innerHTML = "Status: Stopped";
+						//disable stop button
+						disableButton(button);
+						//enable start button
+						enableButton(button.parentNode.querySelectorAll("button")[3]);
+						//enable delete button
+						enableButton(button.parentNode.querySelectorAll("button")[0]);
+						//console.log( req.responseText);
+					}
+					else
+						console.log("error on stop: ",responseString);
+				}
+			},prepareHttpData(data));
+			
+		}
+		
+		function openConfigTab(){
+			mainView.style.display = "None";
+			configContainer.style.display = "block";
+			updateSelectPredefinedConfig();
+		}
+		
+		//get the available configs to copy the settings from
+		function updateSelectPredefinedConfig(){
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_get_predefined_configs")%>';
+			ajaxRequest("GET",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					responseString = responseString.replaceAll("\\\"","");
+					if(req.status == 200){
+						let select = document.getElementById("select-predefined-config");
+						select.innerHTML = "<option value=''></option>"; //reset the select
+						// console.log("res: ",responseString);
+						let configs = responseString.split("\\n");
+						//console.log(configs);
+						
+						if(configs != ""){
+							for(let i=0;i<configs.length;i++){
+								let opt = document.createElement("option");
+								opt.setAttribute("value", configs[i]);
+								opt.innerHTML = "User-defined: "+configs[i];
+								select.appendChild(opt);
+							}
+						}
+					}
+					else{
+						console.log("error: ",responseString);
+					}
+					
+				}
+			});
+		
+		}
+		//append change event for the "load predefined config" select
+		document.getElementById("select-predefined-config").addEventListener("change",function(){
+			if(this.value=="")
+				return;
+			document.getElementById("predefined-config-loading").classList.add("spinning");
+			let val = this.value;
+			let dataJson = {"configName":val};
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_load_predefined_config")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						//reset the form and set the loaded parameters (take the name)
+						let configName = document.getElementById("config-name").value;
+						resetConfigForm();
+						document.getElementById("config-name").value = configName;
+						getConfigDescription(dataJson);
+						parseExistingConfigParams(responseString);
+					}
+					else{
+						this.value="";
+						console.log("error: ",responseString);
+					}
+					document.getElementById("predefined-config-loading").classList.remove("spinning");
+				}
+			},prepareHttpData(dataJson));
+		}); 
+	
+		function getConfigDescription(dataJson){
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_get_config_description")%>';
+			ajaxRequest("POST",url,function(req){
+				if(req.readyState == 4){
+					let responseString = req.responseText;
+					if(req.status == 200){
+						document.getElementById("config-description").value = responseString;
+					}
+					else
+						console.log("error: ",responseString);
+				}
+			},prepareHttpData(dataJson));
+		}
+		function closeConfigTab(e){
+			if(e) e.preventDefault();
+			configChanged = false;
+			newConfig = false;
+			/*
+			hideError();
+			document.forms[0].reset();
+			document.querySelector("#selected-devices-list tbody").innerHTML ="";
+			updateCaptureType(e);
+			*/
+			resetConfigTab();
+			oldName = "";
+			
+			mainView.style.display = "block";
+			configContainer.style.display = "None";
+		}
+		
+		function resetConfigTab(){
+			hideError();
+			document.forms[0].reset();
+			document.querySelector("#selected-devices-list tbody").innerHTML ='<tr><th>#</th><th>MAC</th><th>Delete</th></tr>';
+			document.getElementById("input-add-device-error").style.display="none";
+			//updateCaptureType();
+			// showRotateSettings(false);
+		}
+		function resetConfigForm(e){
+			if(e) e.preventDefault();
+			configChanged = true;
+			/*
+			hideError();
+			document.querySelector("#selected-devices-list tbody").innerHTML ="";
+			document.forms[0].reset();
+			updateCaptureType(e);
+			*/
+			resetConfigTab();
+			if(!newConfig){
+				document.getElementById("config-name").value = oldName;
+			}
+		}
+		
+		function saveConfig(e){
+			if(e) e.preventDefault();
+			if(!configChanged)
+				return;
+			document.getElementById("save-btn").classList.add("spinning");
+			hideError();
+			url = '<%=luci.dispatcher.build_url("admin", "forensics", "forensics","csi_save_config")%>';
+
+			let dataJson = checkConfigData();
+			
+			if(!dataJson){	//error in the data, do not send the request!
+				document.getElementById("save-btn").classList.remove("spinning");
+			}
+			else{
+				ajaxRequest("POST",url,function(req){
+					if(req.readyState == 4){
+						let responseString = req.responseText;
+						document.getElementById("save-btn").classList.remove("spinning");
+						if(req.status == 200){
+							loadExistingConfigs();	//update existing configs and go back
+							closeConfigTab();
+							//resetConfigTab();
+							//console.log("response: ",responseString);
+						}
+						else{
+							displayError(responseString);
+						}
+						
+					}
+				},prepareHttpData(dataJson));
+			}
+			configChanged = false;
+		}
+		
+
+		//validate input data for saved configuration
+		function checkConfigData(){
+			let jsonData = {};
+			let configName = document.getElementById("config-name").value;
+			
+			if(!configName || configName==""){
+				displayError("Insert a valid name for configuration.");
+				return null;
+			}
+			
+			if(!newConfig)
+				jsonData["oldName"] = oldName;
+				
+			jsonData["configName"] = configName;
+			let configChannel=document.getElementById("config-channel").value;
+			if(!configChannel || parseInt(configChannel)<1 || parseInt(configChannel)>14){
+				displayError("Invalid channel. It must be a number in range [1 , 13]");
+				return null;
+			}
+			jsonData["channel"]=parseInt(configChannel);
+			/*jsonData["addLabel"] = (document.getElementById("config-add-label").checked)? 1:0;
+			jsonData["printHeaders"] = (document.getElementById("config-print-headers").checked)? 1:0;
+			jsonData["splitByMac"] = (document.getElementById("config-split-output").checked)? 1:0;
+			jsonData["csvSeparator"] = document.getElementById("csv-separator-select").value;  */
+			jsonData["description"] = document.getElementById("config-description").value;
+			devicesVector = getDevicesVector();
+			if(devicesVector.length>0)
+				jsonData["devices"] = devicesVector;
+				
+			/*labelsVector = getLabelsVector();
+			if(labelsVector.length>0)
+				jsonData["labels"] = labelsVector;
+			*/
+			
+			return jsonData;
+		}
+		
+		//enable a button
+		function enableButton(btn){
+			btn.removeAttribute("readonly");
+		}
+		//disable a button
+		function disableButton(btn){
+			btn.setAttribute("readonly",true);
+		}
+		//prepare devices macs to send to server
+		function getDevicesVector(){
+			let rows = document.querySelectorAll("#selected-devices-list tr");
+			let devices = [];
+			for(var i =1;i<rows.length;i++){
+				let td = rows[i].querySelectorAll("td")[1];
+				devices.push(td.innerHTML);
+			}
+			return devices;
+		
+		}
+		//prepare labels to send to server
+		/*function getLabelsVector(){
+			let labels = [];
+			if(!document.getElementById("config-add-label").checked) {
+				return labels;
+			}
+			labelsInputs = document.querySelectorAll(".device-label");
+			for(var i =0;i<labelsInputs.length;i++){
+				if(labelsInputs[i].value.trim()=="")
+					labelsInputs[i].value = 0;
+				labels.push(parseInt(labelsInputs[i].value));
+			}
+			return labels;
+		}*/
+		
+		function displayError(message){
+			let err = document.getElementById("config-error");
+			if(message)
+				err.innerHTML = message;
+			err.style.display="block";
+		}
+		
+		function hideError(){
+			document.getElementById("config-error").style.display="none";
+		}
+		
+		
+		function ajaxRequest(method, url, cback, formElement=null, reset = true,timeout = 4) {
+			var req = new XMLHttpRequest();
+			req.timeout = timeout*1000;
+			req.onreadystatechange = function() {
+				cback(req);
+			};
+			req.open(method, url);
+			if (formElement == null) {
+				req.send();
+			} else {
+				req.send(new FormData(formElement));
+			}
+			if (formElement !== null && reset === true) {
+				formElement.reset();
+			}
+		}
+		//translate a json into a form element to be sent to the server
+		function prepareHttpData(jsonData){
+			var form = document.createElement("form");
+			for(key in jsonData){
+				let input = document.createElement("input");
+				input.setAttribute("name",key);
+				input.setAttribute("value",String(jsonData[key]));
+				form.appendChild(input);
+			}
+			return form;
+		}
+		
+		
+		function removeDeviceFromList(e){
+			e.preventDefault();
+			configChanged=true;
+			thisRow = this.parentNode.parentNode;
+			thisRow.parentNode.removeChild(thisRow);
+			//fix other numbers
+			let tableRows = document.querySelectorAll("#selected-devices-list tbody tr");
+			for(var i=1;i<tableRows.length;i++){
+				tableRows[i].children[0].innerHTML = i;
+			}
+		}
+		
+		
+		function checkMac(mac){
+			if(!mac.match(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/)){
+				document.getElementById("input-add-device-error").innerHTML = "Invalid MAC address";
+				return false;
+			}
+			let tableRows = document.querySelectorAll("#selected-devices-list tbody tr");
+			for(var i=1;i<tableRows.length;i++){
+				let macTd = tableRows[i].querySelectorAll("td")[1];
+				if(mac.toUpperCase() == macTd.innerHTML.toUpperCase()){
+					document.getElementById("input-add-device-error").innerHTML = "Device already in the list";
+					return false;
+				}
+			}
+			if(mac.toUpperCase() == "FF:FF:FF:FF:FF:FF"){
+				document.getElementById("input-add-device-error").innerHTML = "Cannot add device with broadcast address";
+				return false;
+			}
+			
+			
+			return true;
+		}
+		function addDeviceToList(mac){
+			//console.log("called: mac is ",mac);
+			let table = document.querySelector("#selected-devices-list tbody");
+			let row = document.createElement("tr");
+			let nTd = document.createElement("td");
+			let index = table.querySelectorAll("tr").length;
+			nTd.innerHTML = index;
+			let macTd = document.createElement("td");
+			macTd.innerHTML = mac.toUpperCase();
+			
+			/*let labelTd = document.createElement("td");
+			if(label==null)
+				label = index;*/
+			// labelTd.innerHTML = '<input id="config-window-time" class="device-label" type="number" step="1" value='+label+' style="width:60px>">';
+			/*if(!document.getElementById("config-add-label").checked)
+				labelTd.style.display="none"; */
+				
+			let btnTd = document.createElement("td");
+			let btn = document.createElement("button");
+			
+			btn.classList.add("btn");
+			btn.classList.add("cbi-button-reset");
+			btn.innerHTML = "x";
+			btn.addEventListener("click",removeDeviceFromList);
+			btnTd.appendChild(btn);
+			
+			row.appendChild(nTd);
+			row.appendChild(macTd);
+			//row.appendChild(labelTd);
+			row.appendChild(btnTd);
+			
+			table.appendChild(row)
+		
+		
+		}
+		document.getElementById("btn-add-device").addEventListener("click",clickAddDeviceToList);
+		document.getElementById("input-add-device").addEventListener("change",function(){document.getElementById("input-add-device-error").style.display="none";});
+		function clickAddDeviceToList(e){
+			e.preventDefault();
+			document.getElementById("input-add-device-error").style.display="none";
+			let mac = (document.getElementById("input-add-device").value).trim();
+			if(!checkMac(mac)){
+				document.getElementById("input-add-device-error").style.display="block";
+				return
+			}
+			addDeviceToList(mac);
+			document.getElementById("input-add-device").value = "";
+			configChanged=true;
+		}
+		
+	}//closes the window.onload
+})(); //closes the self-calling function (mother of the script)
+</script>
+<style>
+
+.border{
+	border: 2px solid black;
+	border-radius:4px;
+}
+.border.clickable{
+	background:linear-gradient(#fff,#fff 40%,#e6e6e6) no-repeat;
+}
+.existing-config{
+	border-bottom: 2px solid grey;
+	margin: 10px;
+	padding: 5px;
+	font-size:14px;
+	font-weight: 400;
+}
+.clickable{
+	cursor: pointer;
+}
+#new-config-tab{
+	padding: 0px 15px 40px 15px;	
+}
+
+#new-config-buttons{
+	bottom:0;
+}
+
+.ftr-table td{
+	text-align:center;
+}
+.ftr-table tr{
+	line-height:25px;
+	border-bottom:1px solid grey;
+}
+.ftr-table button{
+	line-height: 10px;
+}
+.error{
+	color: red;
+	font-weight:600;
+	border: 1px solid red;
+	text-align: center;
+	padding: 5px;
+	margin-top: 3px;
+	display: none;
+}
+.text-center{
+	text-align: center;
+}
+.button-existing-config{
+	position:relative;
+	bottom:5px;
+	line-height:80%;
+	margin:0 2px;
+	float:right;
+}
+.existing-config-field{
+	display:inline;
+	margin: 0 15px;
+}
+
+.config-settings-subdiv{
+	padding: 10px;
+	display:inline-block;
+	float:left;
+	width: 50%;
+	height: auto;
+	min-height:400px;
+	text-align:center;
+}
+.checkbox{
+	margin-left: 5px !important;
+}
+.rmv-device{
+	font-weight:700;
+	color:red;
+}
+#input-add-device-error{
+	display:none;
+	color:red;
+	border: 1px solid red;
+	border-radius:3px;
+
+}
+.features-row{
+	border-bottom: 2px solid grey;
+	padding: 3px 0;
+}
+	
+#config-settings{
+    min-height: 390px;
+}
+.device-label{
+	width:50px;
+	height: 20px;
+}
+#refresh-existing-configs i{
+	font-size:18px;
+	color:#4a4;
+	position:relative;
+	right:9px;
+	top:0.5px;
+}
+#refresh-existing-configs i.spinning{
+	position:relative;
+	right:16px;
+}
+.clickable{
+	cursor: pointer;
+}
+i:hover{
+	opacity:0.6;
+}
+.bold{
+	font-weight: bold;
+}
+</style>
+
+<%+footer%>
