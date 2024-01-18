@@ -938,7 +938,7 @@ int addDevice(struct ether_addr *dev){
 	if(splitByMac){
 		char *mkdirpath = malloc(PATH_MAX + 1);
 		sprintf(mkdirpath,"%s/%s",WFileName,ether_ntoa(dev));
-		mkdir(mkdirpath);
+		mkdir(mkdirpath,S_IRWXU | S_IRWXG | S_IRWXO);
 		free(mkdirpath);
 		
 		if(rotate)
@@ -1511,10 +1511,10 @@ void recursive_mkdir(char *dir) {
     for (p = tmp + 1; *p; p++)
         if (*p == '/') {
             *p = 0;
-            mkdir(tmp);
+            mkdir(tmp,S_IRWXU | S_IRWXG | S_IRWXO);
             *p = '/';
         }
-    mkdir(tmp);
+    mkdir(tmp,S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
 

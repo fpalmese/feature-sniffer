@@ -19,6 +19,7 @@
 #include <libconfig.h>
 #include <math.h>
 #include <sys/dir.h>
+#include <sys/stat.h>
 
 //#include "statistics.h"
 #include "array.h"
