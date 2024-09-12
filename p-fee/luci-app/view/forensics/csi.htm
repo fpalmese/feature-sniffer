@@ -18,14 +18,14 @@ end
 
 %>
 
-<h2><%:CSI%></h2>
-<div>This section allows to extract features from network traffic. Here you can control your Configurations or create new ones.</div>
+<h2><%:CSI Sniffer%></h2>
+<div>This section allows to extract CSI features. Here you can control your Configurations or create new ones.</div>
 
 
 </br></br>
 <div id="main-view">
 	<div id="create-new-config" class="border clickable">
-		<center><h5>Create a new Feature Capture Configuration</h5></center>
+		<center><h5>Create a new CSI Sniffer Configuration</h5></center>
 	</div>
 	</br></br>
 
@@ -66,13 +66,24 @@ end
 								Description: <textarea style="display:inline-block;" id="config-description"> 
 								</textarea></br></br>
 							
-								Channel: <input id="config-channel" type="number" min=1 max=13 step=1 value=7 style="width:60px"></br></br>
+								Wi-Fi Band: <select id="select-band">
+										<option value="2.4">2.4GHz</option>
+										<option value="5">5GHz</option>
+									</select></br></br>
+									
+								Channel Bandwidth: <select id="select-bandwidth">
+										<option value="20">20MHz</option>
+									</select></br></br>
 							
+								Channel No.: <input id="config-channel" type="number" min=1 max=165 step=1 value=7 style="width:60px"></br></br>
+								
+								
 								<div style="display:inline-block;float:right;">
 									Load an existing configuration:
-									<a id="predefined-config-loading"></a><select id="select-predefined-config">
-									<option value="-"></option>
-								</select>
+									<a id="predefined-config-loading"></a>
+									<select id="select-predefined-config">
+										<option value="-"></option>
+									</select>
 								</div>
 							</div>
 
@@ -80,7 +91,7 @@ end
 					
 						<div class="config-settings-subdiv" >
 							<h5>Select Devices</h5>
-							<div>Capture only traffic of devices in the list. Leave blank to include all devices available in the network.</div></br>
+							<div>Consider only frames from devices in the list. Leave blank to include all devices</div></br>
 							<center>
 							<div style="border-bottom: 2px solid grey;width:90%;"><b>Device List</b></div>
 							<table id="selected-devices-list" class="table ftr-table" style="width:80%;">
@@ -143,6 +154,7 @@ end
 		document.getElementById("save-btn").addEventListener("click",saveConfig);
 		document.getElementById("reset-btn").addEventListener("click",resetConfigForm);
 		document.querySelector("form").addEventListener("change",function(){configChanged=true;});
+		document.getElementById("select-band").addEventListener("change",updateBand);
 		
 		function updateExistingConfigsTab(configString){
 			document.getElementById("existing-configs-div").innerHTML="";document.getElementById("existing-configs-div").innerHTML="";
@@ -395,6 +407,24 @@ end
 				}
 			},prepareHttpData(data),timeout=10);
 		}
+		
+		function updateBand(e){
+			const bandwidths = {
+				"2.4": ["20MHz","40MHz"],
+				"5": ["20MHz","40MHz","80MHz"]
+			};
+			const newOptions = options[document.getElementById("select-band").value];
+			
+			var select_bandwidth = document.getElementById("select-bandwidth");
+			select_bandwidth.innerHTML = '';
+			newOptions.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.toLowerCase();
+                optionElement.textContent = option;
+                select_bandwidth.appendChild(optionElement);
+            });
+		}
+		
 		
 		function parseExistingConfigParams(resString){
 			//console.log("res: ",resString);
