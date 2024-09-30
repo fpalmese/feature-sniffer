@@ -28,4 +28,5 @@ Once your configuration is ready you can control it by using the control buttons
 
 # Citation
 If you use the proposed framework or the datasets in your research, please cite our work in IEEE Internet of Things Journal:
+
 F. Palmese, A. E. C. Redondi and M. Cesana, "Designing a Forensic-Ready Wi-Fi Access Point for the Internet of Things," in IEEE Internet of Things Journal, 2023 doi: 10.1109/JIOT.2023.3304423
