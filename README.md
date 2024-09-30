@@ -24,3 +24,8 @@ Go to the Forensics section and you will have the following homepage:
 Create a new configuration with the button and insert your configuration parameters as you prefer. The configuration tab will be as follows:
 ![config](https://user-images.githubusercontent.com/67421482/136049439-2d8a724d-d33d-4f80-885b-0e1854cc071d.png)
 Once your configuration is ready you can control it by using the control buttons in the homepage: Start, Stop, Output, Delete
+
+
+# Citation
+If you use the proposed framework or the datasets in your research, please cite our work in IEEE Internet of Things Journal:
+F. Palmese, A. E. C. Redondi and M. Cesana, "Designing a Forensic-Ready Wi-Fi Access Point for the Internet of Things," in IEEE Internet of Things Journal, 2023 doi: 10.1109/JIOT.2023.3304423
