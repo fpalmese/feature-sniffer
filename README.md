@@ -26,6 +26,16 @@ Create a new configuration with the button and insert your configuration paramet
 Once your configuration is ready you can control it by using the control buttons in the homepage: Start, Stop, Output, Delete
 
 
+# Public Dataset
+CSI Datasets: https://polimi365-my.sharepoint.com/:f:/g/personal/10692910_polimi_it/EidULtKKJBROtWtvuj_vwfwBI5XSz-nhXqW6YaLDQK_G_w?e=TT3Kwi
+  (raw CSI features)
+
+Activity Recognition with Smart Cameras: https://polimi365-my.sharepoint.com/:f:/g/personal/10692910_polimi_it/EtV-T0IpA79Po33weynEUKcBnY9bApxKb-9nQYgPHFZvdw?e=CfhCTn
+  (original PCAP files)
+
+Smart Speaker Interaction detection: https://polimi365-my.sharepoint.com/:f:/g/personal/10692910_polimi_it/ErEiaK7JTUFGoDt3IC4xNvABd9wwv3dphIfGkIRsBEWqsQ?e=BTg9nq
+  (Features with aggregated windows of 0.5 and 1 seconds
+
 # Citation
 If you use the proposed framework or the datasets in your research, please cite our work in IEEE Internet of Things Journal:
 
