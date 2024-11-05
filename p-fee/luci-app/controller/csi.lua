@@ -1,13 +1,13 @@
 
 module("luci.controller.admin.csi",package.seeall)
 rootDirectory = "/home/forensics"
+broker_address = "192.168.2.157"
 
 --filesDirectory = "/mnt/sda1/testDirectory"
 filesDirectory = tostring(luci.sys.exec("cat "..rootDirectory.."/init/baseDirectory")):gsub("\n", "")
 
-
 function index()
-	entry({"admin", "forensics", "forensics","csi"}, template("forensics/csi"), ("Traffic CSI Feature")).leaf = true
+	entry({"admin", "forensics", "forensics","csi"}, template("forensics/csi"), ("CSI-Sniffer")).leaf = true
 	entry({"admin", "forensics", "forensics","csi_start"},call("handle_start_csi"),nil)
 	entry({"admin", "forensics", "forensics","csi_stop"},call("handle_stop_csi"),nil)
 	entry({"admin", "forensics", "forensics","csi_save_config"},call("handle_save_config"),nil)
@@ -34,9 +34,9 @@ function handle_start_csi()
 	-- when starting the capture, remove the .csv file in the output folder
 	luci.sys.call("rm "..filesDirectory.."/features/csi_configs/"..configName.."/output/"..configName..".csv")
 	-- publish on topic prepare to retrieve the saved settings for the capture
-	luci.sys.call("mosquitto_pub -h 192.168.2.117 -t prepare -f "..filepath)
+	luci.sys.call("mosquitto_pub -h "..broker_address.." -t prepare -f "..filepath)
 	-- publish on topic start to start the capture with the chosen configuration
-	luci.sys.call("mosquitto_pub -h 192.168.2.117 -t start -m "..configName)
+	luci.sys.call("mosquitto_pub -h "..broker_address.." -t start -m "..configName)
 	
 	luci.http.prepare_content("application/json")	--prepare the Http response
 	luci.http.write_json("Capture started")
@@ -49,7 +49,7 @@ function handle_stop_csi()
 	local configName = luci.http.formvalue("configName")
 	
 	-- publish on topic stop to stop the capture
-	luci.sys.call("mosquitto_pub -h 192.168.2.117 -t stop -m "..configName)
+	luci.sys.call("mosquitto_pub -h "..broker_address.." -t stop -m "..configName)
 
 	luci.http.prepare_content("application/json")	--prepare the Http response
 	luci.http.write_json("Capture stopped")
@@ -392,7 +392,7 @@ function handle_check_output_readiness()
 	end
 	
 	local size = filestats.size
-	luci.sys.call("echo '"..size.."' > /mnt/sda1/testDirectory/features/test")
+	luci.sys.call("echo '"..size.."' > "..filesDirectory.."/features/test")
 	if size <= 1 then
 		luci.http.status(202,"Accepted")
 		luci.http.write_json("Output not ready yet")
@@ -436,11 +436,11 @@ function handle_transfer_csv()
 		luci.sys.call("rm "..filesDirectory.."/features/csi_configs/"..configName.."/pid")
 	elseif (checkExists ~=1) then
 		-- delete the retained messages on topic output (otherwise it may download old .csv)
-		luci.sys.call("mosquitto_pub -h 192.168.2.117 -t output -n -r ")
+		luci.sys.call("mosquitto_pub -h "..broker_address.." -t output -n -r ")
 		-- publish on topic download to start the download process 
-		luci.sys.call("mosquitto_pub -h 192.168.2.117 -t download -m "..configName)
+		luci.sys.call("mosquitto_pub -h "..broker_address.." -t download -m "..configName)
 		-- subscribe on topic output to save data in a .csv file
-		luci.sys.call("mosquitto_sub -h 192.168.2.117 -t output -C 1 > "..filesDirectory.."/features/csi_configs/"..configName.."/output/"..configName..".csv")
+		luci.sys.call("mosquitto_sub -h "..broker_address.." -t output -C 1 > "..filesDirectory.."/features/csi_configs/"..configName.."/output/"..configName..".csv")
 	
 		local checkExists = tonumber(luci.sys.exec("test -f "..filesDirectory.."/features/csi_configs/"..configName.."/output/"..configName..".csv && echo 1"))
 		local status = checkConfigStatus(configName)
